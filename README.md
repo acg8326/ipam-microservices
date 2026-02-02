@@ -37,6 +37,24 @@ flowchart TB
 
 ## Services
 
+### Gateway Service (Port 8000)
+API Gateway that routes all requests to backend services.
+
+**Features:**
+- Request proxying with token forwarding
+- Circuit breaker (5 failures → 30s recovery)
+- Health check endpoint
+- Request logging with tracing
+- Rate limiting (60 req/min)
+
+**Endpoints:**
+| Method | Endpoint | Routes To |
+|--------|----------|-----------|
+| GET | /api/health | Gateway health + service status |
+| * | /api/auth/* | Auth Service |
+| * | /api/ip-addresses/* | IP Service |
+| * | /api/audit-logs/* | IP Service |
+
 ### Auth Service (Port 8001)
 Handles authentication and authorization using Laravel Passport.
 
@@ -101,6 +119,15 @@ php artisan migrate
 php artisan serve --port=8002
 ```
 
+4. Setup Gateway Service
+```bash
+cd services/gateway
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan serve --port=8000
+```
+
 ## API Authentication
 
 All protected endpoints require a Bearer token:
@@ -123,5 +150,6 @@ Token responses include `expires_in` (seconds) for automatic renewal:
 
 ## Documentation
 
+- [Gateway Service](docs/gateway.md)
 - [Auth Service API](docs/auth-service.md)
 - [IP Service API](docs/ip-service.md)
