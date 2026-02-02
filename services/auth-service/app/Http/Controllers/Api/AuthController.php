@@ -3,94 +3,75 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
+use App\Services\AuthService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
-
-use App\Models\User;
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
+    public function __construct(
+        private AuthService $authService
+    ) {}
+
+    /**
+     * Register a new user.
+     */
+    public function register(RegisterRequest $request): JsonResponse
     {
-        $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|in:admin,user',
-        ]);
+        $result = $this->authService->register($request->validated());
 
-        $user = User::create([
-            'name' => $validatedData['name'],
-            'email' => $validatedData['email'],
-            'password' => Hash::make($validatedData['password']),
-            'role' => $validatedData['role'],
-        ]);
-
-        $token = $user->createToken('auth_token', [$user->role])->accessToken;
-
-        return response()->json([
-            'user' => $user,
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-        ], 201);
+        return response()->json($result, 201);
     }
 
-    public function login(Request $request)
+    /**
+     * Login user and return token.
+     */
+    public function login(LoginRequest $request): JsonResponse
     {
-        $validatedData = $request->validate([
-            'email' => 'required|string|email',
-            'password' => 'required|string',
-        ]);
+        $result = $this->authService->login($request->validated());
 
-        $user = User::where('email', $validatedData['email'])->first();
-
-        if (! $user || ! Hash::check($validatedData['password'], $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
-        }
-
-        $user->tokens()->delete();
-        $token = $user->createToken('auth_token', [$user->role])->accessToken;
-
-        return response()->json([
-            'user' => $user,
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-        ]);
+        return response()->json($result);
     }
 
-    public function logout(Request $request)
+    /**
+     * Logout current user.
+     */
+    public function logout(Request $request): JsonResponse
     {
-        $request->user()->token()->revoke();
+        $this->authService->logout($request->user());
 
         return response()->json([
             'message' => 'Successfully logged out',
         ]);
     }
 
-    public function user(Request $request)
+    /**
+     * Get current authenticated user.
+     */
+    public function user(Request $request): JsonResponse
     {
         return response()->json($request->user());
     }
 
-    public function refresh(Request $request)
+    /**
+     * Refresh user token.
+     */
+    public function refresh(Request $request): JsonResponse
     {
-        $user = $request->user();
-        $user->token()->revoke();
-        $token = $user->createToken('auth_token', [$user->role])->accessToken;
+        $result = $this->authService->refresh($request->user());
 
-        return response()->json([
-            'user' => $user,
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-        ]);
+        return response()->json($result);
     }
 
-    public function users()
+    /**
+     * Get all users (admin only).
+     */
+    public function users(): JsonResponse
     {
-        return response()->json(User::all());
+        $users = $this->authService->getAllUsers();
+
+        return response()->json($users);
     }
 }
