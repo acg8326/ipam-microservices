@@ -1,0 +1,34 @@
+# Development override - mounts local code for live reloading
+services:
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./services/auth-service:/var/www/html
+      - /var/www/html/vendor
+    environment:
+      APP_ENV: local
+      APP_DEBUG: true
+
+  ip-service:
+    build:
+      context: ./services/ip-service
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./services/ip-service:/var/www/html
+      - /var/www/html/vendor
+    environment:
+      APP_ENV: local
+      APP_DEBUG: true
+
+  gateway:
+    build:
+      context: ./services/gateway
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./services/gateway:/var/www/html
+      - /var/www/html/vendor
+    environment:
+      APP_ENV: local
+      APP_DEBUG: true

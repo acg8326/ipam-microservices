@@ -1,0 +1,170 @@
+services:
+  # ===================
+  # Database Services
+  # ===================
+  mysql-auth:
+    image: mysql:8.0
+    container_name: ipam-mysql-auth
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-secret}
+      MYSQL_DATABASE: ${AUTH_DB_DATABASE:-auth_service}
+      MYSQL_USER: ${AUTH_DB_USERNAME:-auth_user}
+      MYSQL_PASSWORD: ${AUTH_DB_PASSWORD:-auth_secret}
+    volumes:
+      - mysql-auth-data:/var/lib/mysql
+    networks:
+      - ipam-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-ip:
+    image: mysql:8.0
+    container_name: ipam-mysql-ip
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-secret}
+      MYSQL_DATABASE: ${IP_DB_DATABASE:-ip_service}
+      MYSQL_USER: ${IP_DB_USERNAME:-ip_user}
+      MYSQL_PASSWORD: ${IP_DB_PASSWORD:-ip_secret}
+    volumes:
+      - mysql-ip-data:/var/lib/mysql
+    networks:
+      - ipam-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===================
+  # Application Services
+  # ===================
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile
+    container_name: ipam-auth-service
+    restart: unless-stopped
+    environment:
+      APP_NAME: "Auth Service"
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_URL: http://auth-service
+      DB_CONNECTION: mysql
+      DB_HOST: mysql-auth
+      DB_PORT: 3306
+      DB_DATABASE: ${AUTH_DB_DATABASE:-auth_service}
+      DB_USERNAME: ${AUTH_DB_USERNAME:-auth_user}
+      DB_PASSWORD: ${AUTH_DB_PASSWORD:-auth_secret}
+      CACHE_DRIVER: file
+      SESSION_DRIVER: file
+      QUEUE_CONNECTION: sync
+    volumes:
+      - auth-storage:/var/www/html/storage
+    depends_on:
+      mysql-auth:
+        condition: service_healthy
+    networks:
+      - ipam-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  ip-service:
+    build:
+      context: ./services/ip-service
+      dockerfile: Dockerfile
+    container_name: ipam-ip-service
+    restart: unless-stopped
+    environment:
+      APP_NAME: "IP Service"
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_URL: http://ip-service
+      DB_CONNECTION: mysql
+      DB_HOST: mysql-ip
+      DB_PORT: 3306
+      DB_DATABASE: ${IP_DB_DATABASE:-ip_service}
+      DB_USERNAME: ${IP_DB_USERNAME:-ip_user}
+      DB_PASSWORD: ${IP_DB_PASSWORD:-ip_secret}
+      CACHE_DRIVER: file
+      SESSION_DRIVER: file
+      QUEUE_CONNECTION: sync
+      AUTH_SERVICE_URL: http://auth-service
+    volumes:
+      - ip-storage:/var/www/html/storage
+    depends_on:
+      mysql-ip:
+        condition: service_healthy
+    networks:
+      - ipam-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  gateway:
+    build:
+      context: ./services/gateway
+      dockerfile: Dockerfile
+    container_name: ipam-gateway
+    restart: unless-stopped
+    ports:
+      - "${GATEWAY_PORT:-8000}:80"
+    environment:
+      APP_NAME: "Gateway"
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_URL: http://localhost:${GATEWAY_PORT:-8000}
+      AUTH_SERVICE_URL: http://auth-service
+      IP_SERVICE_URL: http://ip-service
+      CACHE_DRIVER: file
+      SESSION_DRIVER: file
+    volumes:
+      - gateway-storage:/var/www/html/storage
+    depends_on:
+      - auth-service
+      - ip-service
+    networks:
+      - ipam-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ===================
+  # Nginx Reverse Proxy (Optional - for production)
+  # ===================
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: ipam-nginx
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./docker/nginx/ssl:/etc/nginx/ssl:ro
+  #   depends_on:
+  #     - gateway
+  #   networks:
+  #     - ipam-network
+
+networks:
+  ipam-network:
+    driver: bridge
+
+volumes:
+  mysql-auth-data:
+  mysql-ip-data:
+  auth-storage:
+  ip-storage:
+  gateway-storage:

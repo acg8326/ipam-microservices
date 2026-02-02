@@ -90,13 +90,39 @@ Handles IP address management with CRUD operations and tamper-proof audit loggin
 
 ## Quick Start
 
-### Prerequisites
+### Option 1: Docker (Recommended)
+
+```bash
+# Clone the repository
+git clone https://github.com/acg8326/ipam-microservices.git
+cd ipam-microservices
+
+# Copy environment file
+cp .env.example .env
+
+# Build and start all services
+make up-build
+
+# Or using docker compose directly
+docker compose up -d --build
+
+# Run migrations and setup Passport
+make fresh
+```
+
+Services will be available at:
+- **Gateway:** http://localhost:8000
+- **Health Check:** http://localhost:8000/api/health
+
+### Option 2: Manual Setup
+
+#### Prerequisites
 - PHP 8.2
 - Composer
 - MySQL
 - Node.js & npm
 
-### Installation
+#### Installation
 
 1. Clone the repository
 ```bash
