@@ -120,16 +120,26 @@ class AuthService
         return User::all();
     }
 
-    private function createTokenResponse(User $user, string $sessionId): array
+    private function createTokenResponse(User $user, ?string $auditSessionId = null): array
     {
         $tokenResult = $user->createToken('auth_token', [$user->role]);
         
+        // Use the token's jti (JWT ID) as the session ID for subsequent requests
+        // This is cryptographically secure - can't be forged without private key
+        $sessionId = $tokenResult->token->id;
+
+        // If we logged audit before token creation, update with real session ID
+        if ($auditSessionId && $auditSessionId !== $sessionId) {
+            AuditLog::where('session_id', $auditSessionId)
+                ->update(['session_id' => $sessionId]);
+        }
+
         return [
             'user' => $user,
             'access_token' => $tokenResult->accessToken,
             'token_type' => 'Bearer',
             'expires_in' => self::TOKEN_EXPIRATION_SECONDS,
-            'session_id' => $sessionId,
+            'session_id' => $sessionId, // Now tied to JWT, can't be spoofed
         ];
     }
 

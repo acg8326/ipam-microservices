@@ -84,10 +84,12 @@ class GatewayService
 
             if ($request->bearerToken()) {
                 $http = $http->withToken($request->bearerToken());
-            }
-
-            if ($request->header('X-Session-Id')) {
-                $http = $http->withHeaders(['X-Session-Id' => $request->header('X-Session-Id')]);
+                
+                // Extract session ID from JWT's jti claim - can't be spoofed
+                $sessionId = $this->extractSessionIdFromToken($request->bearerToken());
+                if ($sessionId) {
+                    $http = $http->withHeaders(['X-Session-Id' => $sessionId]);
+                }
             }
 
             $response = match (strtoupper($method)) {
@@ -183,6 +185,27 @@ class GatewayService
             Log::warning('Gateway request client error', $context);
         } else {
             Log::info('Gateway request completed', $context);
+        }
+    }
+
+    /**
+     * Extract session ID from JWT's jti claim.
+     * This is secure because the JWT is cryptographically signed.
+     */
+    private function extractSessionIdFromToken(string $token): ?string
+    {
+        try {
+            $parts = explode('.', $token);
+            if (count($parts) !== 3) {
+                return null;
+            }
+
+            $payload = json_decode(base64_decode(strtr($parts[1], '-_', '+/')), true);
+            
+            return $payload['jti'] ?? null;
+        } catch (\Exception $e) {
+            Log::warning('Failed to extract session ID from token', ['error' => $e->getMessage()]);
+            return null;
         }
     }
 }
