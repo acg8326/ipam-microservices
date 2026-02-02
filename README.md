@@ -91,6 +91,16 @@ php artisan passport:install
 php artisan serve --port=8001
 ```
 
+3. Setup IP Service
+```bash
+cd services/ip-service
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan serve --port=8002
+```
+
 ## API Authentication
 
 All protected endpoints require a Bearer token:
@@ -110,3 +120,8 @@ Token responses include `expires_in` (seconds) for automatic renewal:
 ### Roles
 - **admin** - Full access to all resources
 - **user** - Limited access to resources
+
+## Documentation
+
+- [Auth Service API](docs/auth-service.md)
+- [IP Service API](docs/ip-service.md)
