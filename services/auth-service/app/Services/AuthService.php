@@ -2,84 +2,125 @@
 
 namespace App\Services;
 
+use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Laravel\Passport\Token;
 
 class AuthService
 {
-    /**
-     * Token expiration time in seconds (1 hour)
-     */
     private const TOKEN_EXPIRATION_SECONDS = 3600;
 
-    /**
-     * Register a new user and create access token.
-     */
-    public function register(array $data): array
+    public function register(array $data, ?string $ipAddress = null): array
     {
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
-            'password' => $data['password'], // Model cast handles hashing
+            'password' => $data['password'],
             'role' => $data['role'] ?? 'user',
         ]);
 
-        return $this->createTokenResponse($user);
+        $sessionId = $this->generateSessionId();
+
+        AuditLog::log(
+            'register',
+            'user',
+            $user->id,
+            null,
+            ['name' => $user->name, 'email' => $user->email, 'role' => $user->role],
+            $user->id,
+            $user->email,
+            $sessionId,
+            $ipAddress
+        );
+
+        return $this->createTokenResponse($user, $sessionId);
     }
 
-    /**
-     * Authenticate user and create access token.
-     *
-     * @throws ValidationException
-     */
-    public function login(array $credentials): array
+    public function login(array $credentials, ?string $ipAddress = null): array
     {
         $user = User::where('email', $credentials['email'])->first();
 
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
+            AuditLog::log(
+                'login_failed',
+                'user',
+                null,
+                null,
+                ['email' => $credentials['email']],
+                null,
+                $credentials['email'],
+                null,
+                $ipAddress
+            );
+
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
         }
 
-        // Revoke all existing tokens for this user
         $this->revokeUserTokens($user);
 
-        return $this->createTokenResponse($user);
+        $sessionId = $this->generateSessionId();
+
+        AuditLog::log(
+            'login',
+            'user',
+            $user->id,
+            null,
+            ['email' => $user->email],
+            $user->id,
+            $user->email,
+            $sessionId,
+            $ipAddress
+        );
+
+        return $this->createTokenResponse($user, $sessionId);
     }
 
-    /**
-     * Logout user by revoking current token.
-     */
-    public function logout(User $user): void
+    public function logout(User $user, ?string $sessionId = null, ?string $ipAddress = null): void
     {
+        AuditLog::log(
+            'logout',
+            'user',
+            $user->id,
+            null,
+            ['email' => $user->email],
+            $user->id,
+            $user->email,
+            $sessionId,
+            $ipAddress
+        );
+
         $user->token()->revoke();
     }
 
-    /**
-     * Refresh user token by revoking current and creating new.
-     */
-    public function refresh(User $user): array
+    public function refresh(User $user, ?string $sessionId = null, ?string $ipAddress = null): array
     {
         $user->token()->revoke();
-        
-        return $this->createTokenResponse($user);
+
+        AuditLog::log(
+            'token_refresh',
+            'user',
+            $user->id,
+            null,
+            ['email' => $user->email],
+            $user->id,
+            $user->email,
+            $sessionId,
+            $ipAddress
+        );
+
+        return $this->createTokenResponse($user, $sessionId ?? $this->generateSessionId());
     }
 
-    /**
-     * Get all users (admin function).
-     */
     public function getAllUsers(): \Illuminate\Database\Eloquent\Collection
     {
         return User::all();
     }
 
-    /**
-     * Create token response with user data and expiration info.
-     */
-    private function createTokenResponse(User $user): array
+    private function createTokenResponse(User $user, string $sessionId): array
     {
         $tokenResult = $user->createToken('auth_token', [$user->role]);
         
@@ -88,14 +129,17 @@ class AuthService
             'access_token' => $tokenResult->accessToken,
             'token_type' => 'Bearer',
             'expires_in' => self::TOKEN_EXPIRATION_SECONDS,
+            'session_id' => $sessionId,
         ];
     }
 
-    /**
-     * Revoke all tokens for a user.
-     */
     private function revokeUserTokens(User $user): void
     {
         $user->tokens()->update(['revoked' => true]);
+    }
+
+    private function generateSessionId(): string
+    {
+        return Str::uuid()->toString();
     }
 }

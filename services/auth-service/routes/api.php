@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -15,6 +16,7 @@ Route::middleware('auth:api')->group(function () {
 
     Route::middleware('scope:admin')->group(function () {
         Route::get('/users', [AuthController::class, 'users']);
+        Route::get('/audit-logs', [AuditLogController::class, 'index']);
+        Route::get('/audit-logs/verify', [AuditLogController::class, 'verify']);
     });
-    
 });

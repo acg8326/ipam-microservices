@@ -78,6 +78,16 @@ class GatewayController extends Controller
         return $this->gateway->forwardToIpService($request, '/api/audit-logs/verify', 'GET');
     }
 
+    public function authAuditLogIndex(Request $request): JsonResponse
+    {
+        return $this->gateway->forwardToAuth($request, '/api/audit-logs', 'GET');
+    }
+
+    public function authAuditLogVerify(Request $request): JsonResponse
+    {
+        return $this->gateway->forwardToAuth($request, '/api/audit-logs/verify', 'GET');
+    }
+
     public function health(): JsonResponse
     {
         return response()->json($this->gateway->healthCheck());

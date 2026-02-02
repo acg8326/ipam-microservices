@@ -32,11 +32,11 @@ class AuditLog extends Model
     public static function log(
         string $action,
         string $entityType,
-        int $entityId,
+        ?int $entityId,
         ?array $oldValues,
         ?array $newValues,
-        int $userId,
-        string $userEmail,
+        ?int $userId,
+        ?string $userEmail,
         ?string $sessionId,
         ?string $ipAddress
     ): self {

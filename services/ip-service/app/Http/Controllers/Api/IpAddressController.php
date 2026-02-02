@@ -24,9 +24,12 @@ class IpAddressController extends Controller
     public function store(StoreIpAddressRequest $request): JsonResponse
     {
         $user = $request->attributes->get('user');
+        $sessionId = $request->header('X-Session-Id');
+
         $ipAddress = $this->ipAddressService->create(
             $request->validated(),
             $user,
+            $sessionId,
             $request->ip()
         );
 
@@ -43,6 +46,7 @@ class IpAddressController extends Controller
     {
         $ipAddress = $this->ipAddressService->find($id);
         $user = $request->attributes->get('user');
+        $sessionId = $request->header('X-Session-Id');
 
         if (!$this->ipAddressService->canUserModify($user, $ipAddress)) {
             return response()->json([
@@ -54,6 +58,7 @@ class IpAddressController extends Controller
             $ipAddress,
             $request->validated(),
             $user,
+            $sessionId,
             $request->ip()
         );
 
@@ -64,6 +69,7 @@ class IpAddressController extends Controller
     {
         $ipAddress = $this->ipAddressService->find($id);
         $user = $request->attributes->get('user');
+        $sessionId = $request->header('X-Session-Id');
 
         if (!$this->ipAddressService->canUserDelete($user)) {
             return response()->json([
@@ -71,7 +77,7 @@ class IpAddressController extends Controller
             ], 403);
         }
 
-        $this->ipAddressService->delete($ipAddress, $user, $request->ip());
+        $this->ipAddressService->delete($ipAddress, $user, $sessionId, $request->ip());
 
         return response()->json(['message' => 'IP address deleted']);
     }

@@ -15,59 +15,59 @@ class AuthController extends Controller
         private AuthService $authService
     ) {}
 
-    /**
-     * Register a new user.
-     */
     public function register(RegisterRequest $request): JsonResponse
     {
-        $result = $this->authService->register($request->validated());
+        $result = $this->authService->register(
+            $request->validated(),
+            $request->ip()
+        );
 
         return response()->json($result, 201);
     }
 
-    /**
-     * Login user and return token.
-     */
     public function login(LoginRequest $request): JsonResponse
     {
-        $result = $this->authService->login($request->validated());
+        $result = $this->authService->login(
+            $request->validated(),
+            $request->ip()
+        );
 
         return response()->json($result);
     }
 
-    /**
-     * Logout current user.
-     */
     public function logout(Request $request): JsonResponse
     {
-        $this->authService->logout($request->user());
+        $sessionId = $request->header('X-Session-Id');
+        
+        $this->authService->logout(
+            $request->user(),
+            $sessionId,
+            $request->ip()
+        );
 
         return response()->json([
             'message' => 'Successfully logged out',
         ]);
     }
 
-    /**
-     * Get current authenticated user.
-     */
     public function user(Request $request): JsonResponse
     {
         return response()->json($request->user());
     }
 
-    /**
-     * Refresh user token.
-     */
     public function refresh(Request $request): JsonResponse
     {
-        $result = $this->authService->refresh($request->user());
+        $sessionId = $request->header('X-Session-Id');
+        
+        $result = $this->authService->refresh(
+            $request->user(),
+            $sessionId,
+            $request->ip()
+        );
 
         return response()->json($result);
     }
 
-    /**
-     * Get all users (admin only).
-     */
     public function users(): JsonResponse
     {
         $users = $this->authService->getAllUsers();

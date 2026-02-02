@@ -11,15 +11,7 @@ class AuditLogController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = AuditLog::query()->orderBy('created_at', 'desc');
-
-        if ($request->has('entity_type')) {
-            $query->where('entity_type', $request->entity_type);
-        }
-
-        if ($request->has('entity_id')) {
-            $query->where('entity_id', $request->entity_id);
-        }
+        $query = AuditLog::orderBy('created_at', 'desc');
 
         if ($request->has('user_id')) {
             $query->where('user_id', $request->user_id);
@@ -33,15 +25,13 @@ class AuditLogController extends Controller
             $query->where('action', $request->action);
         }
 
-        return response()->json($query->paginate(20));
+        return response()->json($query->paginate(15));
     }
 
     public function verify(): JsonResponse
     {
         $result = AuditLog::verifyChain();
-        
-        $statusCode = $result['valid'] ? 200 : 400;
-        
-        return response()->json($result, $statusCode);
+
+        return response()->json($result);
     }
 }

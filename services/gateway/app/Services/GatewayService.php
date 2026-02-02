@@ -86,6 +86,10 @@ class GatewayService
                 $http = $http->withToken($request->bearerToken());
             }
 
+            if ($request->header('X-Session-Id')) {
+                $http = $http->withHeaders(['X-Session-Id' => $request->header('X-Session-Id')]);
+            }
+
             $response = match (strtoupper($method)) {
                 'GET' => $http->get($url, $request->query()),
                 'POST' => $http->post($url, $request->all()),

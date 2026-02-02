@@ -24,7 +24,7 @@ class IpAddressService
         return IpAddress::findOrFail($id);
     }
 
-    public function create(array $data, array $user, ?string $clientIp = null): IpAddress
+    public function create(array $data, array $user, ?string $sessionId = null, ?string $clientIp = null): IpAddress
     {
         $ipAddress = IpAddress::create([
             'ip_address' => $data['ip_address'],
@@ -41,13 +41,14 @@ class IpAddressService
             $ipAddress->toArray(),
             $user['id'],
             $user['email'],
+            $sessionId,
             $clientIp
         );
 
         return $ipAddress;
     }
 
-    public function update(IpAddress $ipAddress, array $data, array $user, ?string $clientIp = null): IpAddress
+    public function update(IpAddress $ipAddress, array $data, array $user, ?string $sessionId = null, ?string $clientIp = null): IpAddress
     {
         $oldValues = $ipAddress->toArray();
         
@@ -62,13 +63,14 @@ class IpAddressService
             $ipAddress->fresh()->toArray(),
             $user['id'],
             $user['email'],
+            $sessionId,
             $clientIp
         );
 
         return $ipAddress->fresh();
     }
 
-    public function delete(IpAddress $ipAddress, array $user, ?string $clientIp = null): void
+    public function delete(IpAddress $ipAddress, array $user, ?string $sessionId = null, ?string $clientIp = null): void
     {
         $oldValues = $ipAddress->toArray();
         $id = $ipAddress->id;
@@ -83,6 +85,7 @@ class IpAddressService
             null,
             $user['id'],
             $user['email'],
+            $sessionId,
             $clientIp
         );
     }
