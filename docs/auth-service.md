@@ -33,9 +33,12 @@ POST /api/register
         "role": "user"
     },
     "access_token": "eyJ0eXAiOiJKV1QiLCJhbGc...",
-    "token_type": "Bearer"
+    "token_type": "Bearer",
+    "expires_in": 3600
 }
 ```
+
+> **Note:** The `role` field is optional and defaults to `user` if not provided.
 
 ### Login
 ```
@@ -60,7 +63,8 @@ POST /api/login
         "role": "user"
     },
     "access_token": "eyJ0eXAiOiJKV1QiLCJhbGc...",
-    "token_type": "Bearer"
+    "token_type": "Bearer",
+    "expires_in": 3600
 }
 ```
 
@@ -88,10 +92,19 @@ Authorization: Bearer {token}
 
 **Response:** `200 OK`
 ```json
-{
+{user": {
+        "id": 1,
+        "name": "Juan Dela Cruz",
+        "email": "juandelacruz@example.com",
+        "role": "user"
+    },
     "access_token": "eyJ0eXAiOiJKV1QiLCJhbGc...",
-    "token_type": "Bearer"
+    "token_type": "Bearer",
+    "expires_in": 3600
 }
+```
+
+> **Note:** The `expires_in` value is in seconds. Frontend should refresh the token before expiry for seamless user experience.
 ```
 
 ### Logout

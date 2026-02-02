@@ -50,6 +50,20 @@ Handles authentication and authorization using Laravel Passport.
 | POST | /api/refresh | Refresh access token | Yes |
 | GET | /api/users | List all users (admin only) | Admin |
 
+### IP Service (Port 8002)
+Handles IP address management with CRUD operations and audit logging.
+
+**Endpoints:**
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | /api/ip-addresses | List all IP addresses | Yes |
+| POST | /api/ip-addresses | Create new IP address | Yes |
+| GET | /api/ip-addresses/{id} | Get specific IP address | Yes |
+| PUT | /api/ip-addresses/{id} | Update IP address | Yes |
+| DELETE | /api/ip-addresses/{id} | Delete IP address | Admin |
+| GET | /api/audit-logs | List audit logs | Admin |
+| GET | /api/audit-logs/verify | Verify audit log integrity | Admin |
+
 ## Quick Start
 
 ### Prerequisites
@@ -82,6 +96,15 @@ php artisan serve --port=8001
 All protected endpoints require a Bearer token:
 ```
 Authorization: Bearer {your_access_token}
+```
+
+Token responses include `expires_in` (seconds) for automatic renewal:
+```json
+{
+    "access_token": "eyJ0eXAiOiJKV1...",
+    "token_type": "Bearer",
+    "expires_in": 3600
+}
 ```
 
 ### Roles
