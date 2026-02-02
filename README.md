@@ -3,27 +3,30 @@
 A microservices-based IP Address Management System built with Laravel and Vue.js.
 
 ## Architecture
+```mermaid
+flowchart TB
+    subgraph Frontend
+        VUE[Vue.js Frontend]
+    end
+    
+    subgraph Gateway
+        GW[Gateway Service<br/>Routes requests, validates tokens]
+    end
+    
+    subgraph Services
+        AUTH[Auth Service<br/>JWT, Login, Register]
+        IP[IP Management Service<br/>CRUD operations]
+    end
+    
+    VUE --> GW
+    GW --> AUTH
+    GW --> IP
+```
+
 - **Vue.js Frontend** - Single Page Application
 - **Gateway Service** - API Gateway/Router
 - **Auth Service** - Authentication & Authorization (JWT + RBAC)
 - **IP Management Service** - Core CRUD operations for IP records
-
-┌─────────────────────────────────────────────────────┐
-│                  Vue.js Frontend                     │
-└─────────────────────┬───────────────────────────────┘
-                      │
-                      ▼
-┌─────────────────────────────────────────────────────┐
-│                  Gateway Service                     │
-│              (Routes requests, validates tokens)     │
-└───────┬─────────────────────┬───────────────────────┘
-        │                     │
-        ▼                     ▼
-┌───────────────┐     ┌───────────────────┐
-│ Auth Service  │     │ IP Management     │
-│ (JWT, Login,  │     │ Service           │
-│  Register)    │     │ (CRUD operations) │
-└───────────────┘     └───────────────────┘
 
 ## Tech Stack
 - **Backend:** Laravel 12
