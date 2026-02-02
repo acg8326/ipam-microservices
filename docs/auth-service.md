@@ -34,11 +34,14 @@ POST /api/register
     },
     "access_token": "eyJ0eXAiOiJKV1QiLCJhbGc...",
     "token_type": "Bearer",
-    "expires_in": 3600
+    "expires_in": 3600,
+    "session_id": "c9dcc60dfaecb93dc9c3a55fd78659a10afaea306e2a538fefe597856d5e7c08"
 }
 ```
 
 > **Note:** The `role` field is optional and defaults to `user` if not provided.
+
+> **Session ID:** The `session_id` is the JWT's `jti` claim - cryptographically signed and cannot be forged. Used for audit tracking.
 
 ### Login
 ```
@@ -64,7 +67,8 @@ POST /api/login
     },
     "access_token": "eyJ0eXAiOiJKV1QiLCJhbGc...",
     "token_type": "Bearer",
-    "expires_in": 3600
+    "expires_in": 3600,
+    "session_id": "c9dcc60dfaecb93dc9c3a55fd78659a10afaea306e2a538fefe597856d5e7c08"
 }
 ```
 
@@ -92,7 +96,8 @@ Authorization: Bearer {token}
 
 **Response:** `200 OK`
 ```json
-{user": {
+{
+    "user": {
         "id": 1,
         "name": "Juan Dela Cruz",
         "email": "juandelacruz@example.com",
@@ -100,12 +105,12 @@ Authorization: Bearer {token}
     },
     "access_token": "eyJ0eXAiOiJKV1QiLCJhbGc...",
     "token_type": "Bearer",
-    "expires_in": 3600
+    "expires_in": 3600,
+    "session_id": "new_session_id_after_refresh..."
 }
 ```
 
-> **Note:** The `expires_in` value is in seconds. Frontend should refresh the token before expiry for seamless user experience.
-```
+> **Note:** The `expires_in` value is in seconds. Frontend should refresh the token before expiry for seamless user experience. A new `session_id` is generated on refresh.
 
 ### Logout
 ```
@@ -266,4 +271,77 @@ Authorization: Bearer {your_access_token}
 ```
 
 You get the access token from the `/api/login` or `/api/register` response.
+
+## Audit Logging
+
+All authentication events are logged:
+- `register` - New user registration
+- `login` - Successful login
+- `login_failed` - Failed login attempt
+- `logout` - User logout
+- `token_refresh` - Token refresh
+
+### List Auth Audit Logs (Admin Only)
 ```
+GET /api/audit-logs
+Authorization: Bearer {admin_token}
+```
+
+**Query Parameters:**
+- `session_id` (optional): Filter by session ID
+- `user_id` (optional): Filter by user ID
+
+**Response:** `200 OK`
+```json
+{
+    "current_page": 1,
+    "data": [
+        {
+            "id": 1,
+            "action": "login",
+            "entity_type": "user",
+            "entity_id": 1,
+            "old_values": null,
+            "new_values": {"email": "admin@example.com"},
+            "user_id": 1,
+            "user_email": "admin@example.com",
+            "session_id": "c9dcc60dfaecb93d...",
+            "ip_address": "127.0.0.1",
+            "hash": "a1b2c3d4...",
+            "previous_hash": null,
+            "created_at": "2026-02-02T07:16:45.000000Z"
+        }
+    ],
+    "per_page": 20,
+    "total": 1
+}
+```
+
+### Verify Auth Audit Log Integrity (Admin Only)
+```
+GET /api/audit-logs/verify
+Authorization: Bearer {admin_token}
+```
+
+**Response (Valid):** `200 OK`
+```json
+{
+    "valid": true,
+    "errors": []
+}
+```
+
+## Security
+
+### Session Tracking
+The `session_id` returned in token responses is the JWT's `jti` (JWT ID) claim:
+- Cryptographically signed with the server's RSA private key
+- Cannot be forged or spoofed
+- Each token = unique session
+- Tracked across all services via gateway
+
+### Tamper-proof Audit Logs
+Audit logs use SHA256 hash chain:
+- Each log entry includes hash of previous entry
+- Any modification breaks the chain
+- Verify endpoint detects tampering

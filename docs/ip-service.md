@@ -144,7 +144,8 @@ Authorization: Bearer {admin_token}
 **Query Parameters:**
 - `entity_type` (optional): Filter by entity type
 - `entity_id` (optional): Filter by entity ID
-- `user_id` (optional): Filter by user ID
+- `user_id` (optional): Filter by user ID (lifetime tracking)
+- `session_id` (optional): Filter by session ID (within-session tracking)
 
 **Response:** `200 OK`
 ```json
@@ -164,6 +165,7 @@ Authorization: Bearer {admin_token}
             },
             "user_id": 1,
             "user_email": "admin@example.com",
+            "session_id": "c9dcc60dfaecb93dc9c3a55fd78659a10afaea306e2a538fefe597...",
             "ip_address": "127.0.0.1",
             "hash": "a1b2c3d4...",
             "previous_hash": null,
@@ -174,6 +176,8 @@ Authorization: Bearer {admin_token}
     "total": 1
 }
 ```
+
+> **Session Tracking:** The `session_id` links all operations performed within the same login session. Filter by `session_id` to see all actions in a session, or by `user_id` for lifetime activity.
 
 ### Verify Audit Log Integrity (Admin Only)
 ```

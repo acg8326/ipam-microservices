@@ -57,6 +57,8 @@ GET /api/health
 | GET | /api/auth/user | Auth → /api/user |
 | POST | /api/auth/refresh | Auth → /api/refresh |
 | GET | /api/auth/users | Auth → /api/users |
+| GET | /api/auth/audit-logs | Auth → /api/audit-logs |
+| GET | /api/auth/audit-logs/verify | Auth → /api/audit-logs/verify |
 
 ### IP Address Routes
 
@@ -177,6 +179,7 @@ In `config/services.php`:
 │    └── GatewayController                                │
 │           └── GatewayService                            │
 │                 ├── Circuit Breaker                     │
+│                 ├── Session ID Extraction (from JWT)    │
 │                 ├── Request Logging                     │
 │                 ├── Timeout Handling                    │
 │                 └── HTTP Client                         │
@@ -187,4 +190,23 @@ In `config/services.php`:
 │      Auth Service            IP Service                 │
 │      (port 8001)             (port 8002)                │
 └─────────────────────────────────────────────────────────┘
+```
+
+## Session Tracking
+
+The gateway extracts the session ID from the JWT's `jti` claim and forwards it to backend services via `X-Session-Id` header.
+
+**Security:**
+- Session ID is cryptographically tied to the JWT (RSA signed)
+- Cannot be spoofed - extracted from token, not from client headers
+- Each token = unique session for audit tracking
+
+```
+Client Request                 Gateway                    Backend Service
+     │                           │                              │
+     │──── Bearer Token ────────▶│                              │
+     │                           │── Extract jti from JWT ──    │
+     │                           │── Add X-Session-Id header ──▶│
+     │                           │                              │── Log with session_id
+     │◀──────────────────────────│◀─────────────────────────────│
 ```

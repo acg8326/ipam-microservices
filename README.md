@@ -69,7 +69,7 @@ Handles authentication and authorization using Laravel Passport.
 | GET | /api/users | List all users (admin only) | Admin |
 
 ### IP Service (Port 8002)
-Handles IP address management with CRUD operations and audit logging.
+Handles IP address management with CRUD operations and tamper-proof audit logging.
 
 **Endpoints:**
 | Method | Endpoint | Description | Auth |
@@ -79,8 +79,14 @@ Handles IP address management with CRUD operations and audit logging.
 | GET | /api/ip-addresses/{id} | Get specific IP address | Yes |
 | PUT | /api/ip-addresses/{id} | Update IP address | Yes |
 | DELETE | /api/ip-addresses/{id} | Delete IP address | Admin |
-| GET | /api/audit-logs | List audit logs | Admin |
-| GET | /api/audit-logs/verify | Verify audit log integrity | Admin |
+| GET | /api/audit-logs | List audit logs (filter by session_id, user_id) | Admin |
+| GET | /api/audit-logs/verify | Verify audit log hash chain integrity | Admin |
+
+### Auth Service Audit Endpoints
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | /api/auth/audit-logs | List auth audit logs | Admin |
+| GET | /api/auth/audit-logs/verify | Verify auth audit log integrity | Admin |
 
 ## Quick Start
 
@@ -140,13 +146,25 @@ Token responses include `expires_in` (seconds) for automatic renewal:
 {
     "access_token": "eyJ0eXAiOiJKV1...",
     "token_type": "Bearer",
-    "expires_in": 3600
+    "expires_in": 3600,
+    "session_id": "c9dcc60dfaecb93d..."
 }
 ```
+
+> **Session Tracking:** The `session_id` is the JWT's `jti` claim - cryptographically tied to the token and cannot be spoofed. It's used for audit log tracking across services.
 
 ### Roles
 - **admin** - Full access to all resources
 - **user** - Limited access to resources
+
+## Security Features
+
+- **JWT Authentication** - RSA-signed tokens via Laravel Passport
+- **Session Tracking** - Each token has unique session ID (JWT `jti`)
+- **Tamper-proof Audit Logs** - SHA256 hash chain with integrity verification
+- **RBAC** - Role-based access control (admin/user scopes)
+- **Circuit Breaker** - Automatic service isolation on failures
+- **Rate Limiting** - 60 requests/minute per client
 
 ## Documentation
 
