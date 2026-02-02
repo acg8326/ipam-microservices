@@ -3,6 +3,8 @@
 use App\Http\Controllers\Api\AuthController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/health', fn() => response()->json(['status' => 'healthy', 'service' => 'auth']));
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
