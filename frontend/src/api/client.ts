@@ -1,6 +1,6 @@
 import type { ApiError } from '@/types'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
 // Enable mock mode when VITE_MOCK_API is true or when API is unreachable
 export const USE_MOCK_API = import.meta.env.VITE_MOCK_API === 'true'
