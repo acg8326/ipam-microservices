@@ -125,7 +125,7 @@ services:
       APP_URL: http://localhost:${GATEWAY_PORT:-8000}
       AUTH_SERVICE_URL: http://auth-service
       IP_SERVICE_URL: http://ip-service
-      CACHE_DRIVER: file
+      CACHE_STORE: file
       SESSION_DRIVER: file
     volumes:
       - gateway-storage:/var/www/html/storage

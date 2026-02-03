@@ -153,13 +153,19 @@ class ApiClient {
           // Refresh failed, redirect to login
         }
         this.setToken(null)
-        window.location.href = '/login'
+        // Only redirect if not the /auth/user endpoint (used during initialization)
+        if (!endpoint.includes('/auth/user')) {
+          window.location.href = '/login'
+        }
         throw new Error('Unauthorized')
       }
 
       if (response.status === 401) {
         this.setToken(null)
-        window.location.href = '/login'
+        // Only redirect if not the /auth/user endpoint (used during initialization)
+        if (!endpoint.includes('/auth/user')) {
+          window.location.href = '/login'
+        }
         throw new Error('Unauthorized')
       }
 

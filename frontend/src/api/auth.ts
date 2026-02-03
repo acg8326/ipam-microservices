@@ -28,7 +28,7 @@ export const authApi = {
     if (USE_MOCK_API) {
       return mockApi.getUser()
     }
-    return apiClient.get<User>('/auth/me')
+    return apiClient.get<User>('/auth/user')
   },
 
   async refreshToken(): Promise<AuthResponse> {
