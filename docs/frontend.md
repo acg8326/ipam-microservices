@@ -202,12 +202,32 @@ api.interceptors.response.use(
 );
 ```
 
+### Automatic Token Refresh
+
+The API client implements automatic token renewal to prevent session interruption:
+
+| Feature | Description |
+|---------|-------------|
+| **Token Expiry Tracking** | Stores `token_expiry` timestamp in localStorage |
+| **Proactive Refresh** | Refreshes token when < 5 minutes remaining |
+| **Background Timer** | Checks token expiry every 60 seconds |
+| **401 Retry** | On 401 error, attempts refresh then retries request |
+| **Seamless UX** | Active users never see session expiration |
+
+```typescript
+// Token management methods
+setToken(token: string | null, expiresIn?: number)  // Store token with expiry
+isTokenExpiringSoon(): boolean  // True if < 5 min remaining
+isTokenExpired(): boolean       // True if past expiry time
+```
+
 ### API Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/auth/login` | POST | User login |
 | `/auth/logout` | POST | User logout |
+| `/auth/refresh` | POST | Refresh access token |
 | `/auth/me` | GET | Get current user |
 | `/ip-addresses` | GET | List all IPs |
 | `/ip-addresses` | POST | Create IP |

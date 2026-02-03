@@ -48,11 +48,12 @@ npm run test:coverage
 
 | File | Tests | Description |
 |------|-------|-------------|
+| `src/api/client.test.ts` | 17 | Token management, expiry, refresh |
 | `src/stores/auth.test.ts` | 4 | Auth store state and actions |
 | `src/stores/ipAddresses.test.ts` | 4 | IP store state and actions |
 | `src/utils/validation.test.ts` | 8 | IP address validation utilities |
 
-**Total: 16 tests**
+**Total: 33 tests**
 
 ### Writing New Tests
 
