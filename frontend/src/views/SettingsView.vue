@@ -21,9 +21,6 @@ const createLoading = ref(false)
 const createError = ref('')
 const createErrors = ref<Record<string, string[]>>({})
 
-// Active tab
-const activeTab = ref<'users' | 'api-keys' | 'audit-logs' | 'import-export'>('users')
-
 async function loadUsers() {
   loadingUsers.value = true
   usersError.value = ''
@@ -100,64 +97,11 @@ onMounted(() => {
   <div class="settings-view">
     <header class="page-header">
       <h1 class="page-header__title">Settings</h1>
-      <p class="page-header__subtitle">System configuration and administration</p>
+      <p class="page-header__subtitle">User management and administration</p>
     </header>
 
-    <!-- Tab Navigation -->
-    <div class="tabs">
-      <button
-        class="tab"
-        :class="{ 'tab--active': activeTab === 'users' }"
-        @click="activeTab = 'users'"
-      >
-        <svg class="tab__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-        </svg>
-        User Management
-      </button>
-      <button
-        class="tab"
-        :class="{ 'tab--active': activeTab === 'api-keys' }"
-        @click="activeTab = 'api-keys'"
-      >
-        <svg class="tab__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
-        </svg>
-        API Keys
-      </button>
-      <button
-        class="tab"
-        :class="{ 'tab--active': activeTab === 'audit-logs' }"
-        @click="activeTab = 'audit-logs'"
-      >
-        <svg class="tab__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <polyline points="14,2 14,8 20,8" />
-          <line x1="16" y1="13" x2="8" y2="13" />
-          <line x1="16" y1="17" x2="8" y2="17" />
-          <polyline points="10,9 9,9 8,9" />
-        </svg>
-        Audit Logs
-      </button>
-      <button
-        class="tab"
-        :class="{ 'tab--active': activeTab === 'import-export' }"
-        @click="activeTab = 'import-export'"
-      >
-        <svg class="tab__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="17,8 12,3 7,8" />
-          <line x1="12" y1="3" x2="12" y2="15" />
-        </svg>
-        Import/Export
-      </button>
-    </div>
-
-    <!-- User Management Tab -->
-    <div v-if="activeTab === 'users'" class="tab-content">
+    <!-- User Management -->
+    <div class="content-card">
       <div class="content-header">
         <h2 class="content-header__title">Users</h2>
         <button class="btn btn--primary" @click="openCreateModal">
@@ -198,7 +142,6 @@ onMounted(() => {
             <th>Email</th>
             <th>Role</th>
             <th>Created</th>
-            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -211,64 +154,9 @@ onMounted(() => {
               </span>
             </td>
             <td>{{ new Date(user.created_at).toLocaleDateString() }}</td>
-            <td>
-              <button class="action-btn" title="Edit user">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </svg>
-              </button>
-              <button class="action-btn action-btn--danger" title="Delete user">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="3,6 5,6 21,6" />
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                </svg>
-              </button>
-            </td>
           </tr>
         </tbody>
       </table>
-    </div>
-
-    <!-- API Keys Tab -->
-    <div v-if="activeTab === 'api-keys'" class="tab-content">
-      <div class="placeholder-content">
-        <svg class="placeholder-content__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
-        </svg>
-        <h3>API Keys</h3>
-        <p>Generate and manage API keys for programmatic access.</p>
-        <p class="text-muted">Coming soon...</p>
-      </div>
-    </div>
-
-    <!-- Audit Logs Tab -->
-    <div v-if="activeTab === 'audit-logs'" class="tab-content">
-      <div class="placeholder-content">
-        <svg class="placeholder-content__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <polyline points="14,2 14,8 20,8" />
-          <line x1="16" y1="13" x2="8" y2="13" />
-          <line x1="16" y1="17" x2="8" y2="17" />
-        </svg>
-        <h3>Audit Logs</h3>
-        <p>View system activity and change history.</p>
-        <p class="text-muted">Coming soon...</p>
-      </div>
-    </div>
-
-    <!-- Import/Export Tab -->
-    <div v-if="activeTab === 'import-export'" class="tab-content">
-      <div class="placeholder-content">
-        <svg class="placeholder-content__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="17,8 12,3 7,8" />
-          <line x1="12" y1="3" x2="12" y2="15" />
-        </svg>
-        <h3>Import / Export</h3>
-        <p>Import or export IP address data in CSV or JSON format.</p>
-        <p class="text-muted">Coming soon...</p>
-      </div>
     </div>
 
     <!-- Create User Modal -->
@@ -327,7 +215,7 @@ onMounted(() => {
                 required
               >
                 <option value="user">User - Can manage own IP addresses</option>
-                <option value="admin">Admin - Full system access (super-admin)</option>
+                <option value="admin">Admin - Full system access</option>
               </select>
             </div>
 
@@ -395,45 +283,8 @@ onMounted(() => {
   margin: 0;
 }
 
-/* Tabs */
-.tabs {
-  display: flex;
-  gap: 0.25rem;
-  border-bottom: 1px solid #e5e7eb;
-  margin-bottom: 1.5rem;
-}
-
-.tab {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: #6b7280;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.tab:hover {
-  color: #374151;
-}
-
-.tab--active {
-  color: #4ade80;
-  border-bottom-color: #4ade80;
-}
-
-.tab__icon {
-  width: 1.125rem;
-  height: 1.125rem;
-}
-
-/* Tab Content */
-.tab-content {
+/* Content Card */
+.content-card {
   background: #fff;
   border-radius: 12px;
   padding: 1.5rem;
@@ -546,36 +397,6 @@ onMounted(() => {
   color: #1e40af;
 }
 
-/* Action Buttons */
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border: none;
-  background: none;
-  border-radius: 6px;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.action-btn:hover {
-  background-color: #f3f4f6;
-  color: #374151;
-}
-
-.action-btn--danger:hover {
-  background-color: #fef2f2;
-  color: #dc2626;
-}
-
-.action-btn svg {
-  width: 1rem;
-  height: 1rem;
-}
-
 /* Loading & Empty States */
 .loading-state,
 .empty-state {
@@ -624,40 +445,6 @@ onMounted(() => {
 
 .error-state {
   color: #dc2626;
-}
-
-/* Placeholder Content */
-.placeholder-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem;
-  text-align: center;
-}
-
-.placeholder-content__icon {
-  width: 4rem;
-  height: 4rem;
-  color: #d1d5db;
-  margin-bottom: 1rem;
-}
-
-.placeholder-content h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #374151;
-  margin: 0 0 0.5rem;
-}
-
-.placeholder-content p {
-  color: #6b7280;
-  margin: 0;
-}
-
-.text-muted {
-  color: #9ca3af !important;
-  margin-top: 0.5rem !important;
 }
 
 /* Modal */
