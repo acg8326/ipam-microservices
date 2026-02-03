@@ -211,24 +211,64 @@ If mismatch → Tampering detected
 
 ---
 
+## Docker Containerization
+
+### Container Stack
+- **Base Image**: `php:8.2-fpm-alpine` (~50MB)
+- **Web Server**: nginx
+- **Process Manager**: supervisord
+- **Database**: MySQL 8.0
+
+### Services
+| Service | Internal Port | External Port | Database |
+|---------|---------------|---------------|----------|
+| Gateway | 80 | 8000 | None |
+| Auth Service | 80 | 8001 | mysql-auth |
+| IP Service | 80 | 8002 | mysql-ip |
+
+### Docker Compose Files
+- `docker-compose.yml` - Production configuration
+- `docker-compose.dev.yml` - Development with volume mounts
+
+### Quick Commands
+```bash
+make up-build    # Build and start all services
+make down        # Stop all services
+make logs        # View all logs
+make fresh       # Reset databases and migrate
+make health      # Check service health
+make dev         # Development mode with live reload
+```
+
+See [Docker Documentation](docker.md) for full details.
+
+---
+
 ## Technical Stack
 
 - **Framework**: Laravel 12
 - **PHP Version**: 8.2
 - **Authentication**: Laravel Passport (OAuth2)
-- **Database**: MySQL (configurable)
+- **Database**: MySQL 8.0
+- **Containerization**: Docker + Docker Compose
 - **API Format**: RESTful JSON
 
 ---
 
+## Completed Features
+
+- [x] Docker containerization (`docker-compose.yml`)
+- [x] `.env.example` files for all services
+- [x] Makefile with convenience commands
+- [x] Development mode with volume mounts
+
 ## Pending Features
 
-- [ ] Docker containerization (`docker-compose.yml`)
 - [ ] Frontend (Vue.js 3.5 SPA)
 - [ ] Unit tests (PHPUnit)
 - [ ] Integration tests
-- [ ] `.env.example` files for all services
 - [ ] Per-user rate limiting
+- [ ] Redis caching
 
 ---
 

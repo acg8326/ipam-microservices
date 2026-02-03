@@ -345,3 +345,46 @@ Audit logs use SHA256 hash chain:
 - Each log entry includes hash of previous entry
 - Any modification breaks the chain
 - Verify endpoint detects tampering
+
+---
+
+## Docker
+
+### Container Info
+| Property | Value |
+|----------|-------|
+| Image | `php:8.2-fpm-alpine` |
+| Internal Port | 80 |
+| External Port | 8001 |
+| Database | mysql-auth:3306 |
+| Container Name | auth-service |
+
+### Quick Commands
+```bash
+# View logs
+make logs-auth
+
+# Shell into container
+make shell-auth
+
+# Run migrations
+docker compose exec auth-service php artisan migrate
+
+# Regenerate Passport keys
+docker compose exec auth-service php artisan passport:keys --force
+```
+
+### Environment Variables
+Set in `docker-compose.yml`:
+```yaml
+environment:
+  APP_KEY: base64:...
+  APP_URL: http://auth-service
+  DB_CONNECTION: mysql
+  DB_HOST: mysql-auth
+  DB_DATABASE: auth_db
+  DB_USERNAME: auth_user
+  DB_PASSWORD: auth_password
+```
+
+See [Docker Documentation](docker.md) for full setup instructions.

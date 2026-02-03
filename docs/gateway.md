@@ -210,3 +210,47 @@ Client Request                 Gateway                    Backend Service
      │                           │                              │── Log with session_id
      │◀──────────────────────────│◀─────────────────────────────│
 ```
+
+---
+
+## Docker
+
+### Container Info
+| Property | Value |
+|----------|-------|
+| Image | `php:8.2-fpm-alpine` |
+| Internal Port | 80 |
+| External Port | 8000 |
+| Database | None |
+| Container Name | gateway |
+
+### Quick Commands
+```bash
+# View logs
+make logs-gw
+
+# Shell into container
+make shell-gw
+
+# Check health
+make health
+# or
+curl http://localhost:8000/api/health
+```
+
+### Environment Variables
+Set in `docker-compose.yml`:
+```yaml
+environment:
+  APP_KEY: base64:...
+  APP_URL: http://gateway
+  AUTH_SERVICE_URL: http://auth-service
+  IP_SERVICE_URL: http://ip-service
+```
+
+### Service Discovery
+In Docker, services communicate using container names:
+- Gateway → `http://auth-service/api/...`
+- Gateway → `http://ip-service/api/...`
+
+See [Docker Documentation](docker.md) for full setup instructions.

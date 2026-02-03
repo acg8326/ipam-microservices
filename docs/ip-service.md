@@ -318,3 +318,47 @@ All create, update, and delete operations are logged with:
 - Cryptographic hash (tamper detection)
 
 The audit log uses a hash chain where each entry includes the hash of the previous entry, making it tamper-proof.
+
+---
+
+## Docker
+
+### Container Info
+| Property | Value |
+|----------|-------|
+| Image | `php:8.2-fpm-alpine` |
+| Internal Port | 80 |
+| External Port | 8002 |
+| Database | mysql-ip:3306 |
+| Container Name | ip-service |
+
+### Quick Commands
+```bash
+# View logs
+make logs-ip
+
+# Shell into container
+make shell-ip
+
+# Run migrations
+docker compose exec ip-service php artisan migrate
+
+# Fresh migration with seeders
+docker compose exec ip-service php artisan migrate:fresh --seed
+```
+
+### Environment Variables
+Set in `docker-compose.yml`:
+```yaml
+environment:
+  APP_KEY: base64:...
+  APP_URL: http://ip-service
+  DB_CONNECTION: mysql
+  DB_HOST: mysql-ip
+  DB_DATABASE: ip_db
+  DB_USERNAME: ip_user
+  DB_PASSWORD: ip_password
+  AUTH_SERVICE_URL: http://auth-service
+```
+
+See [Docker Documentation](docker.md) for full setup instructions.

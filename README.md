@@ -112,7 +112,22 @@ make fresh
 
 Services will be available at:
 - **Gateway:** http://localhost:8000
+- **Auth Service:** http://localhost:8001
+- **IP Service:** http://localhost:8002
 - **Health Check:** http://localhost:8000/api/health
+
+#### Docker Commands
+
+| Command | Description |
+|---------|-------------|
+| `make up` | Start all services |
+| `make down` | Stop all services |
+| `make logs` | View all logs |
+| `make logs-auth` | View auth service logs |
+| `make shell-auth` | Shell into auth container |
+| `make fresh` | Reset databases and migrate |
+| `make health` | Check service health |
+| `make dev` | Development mode with live reload |
 
 ### Option 2: Manual Setup
 
@@ -194,6 +209,8 @@ Token responses include `expires_in` (seconds) for automatic renewal:
 
 ## Documentation
 
+- [Features Overview](docs/features.md)
+- [Docker Setup](docs/docker.md)
 - [Gateway Service](docs/gateway.md)
 - [Auth Service API](docs/auth-service.md)
 - [IP Service API](docs/ip-service.md)
