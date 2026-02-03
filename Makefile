@@ -20,7 +20,9 @@ help:
 	@echo "  shell-gw   Shell into gateway"
 	@echo "  migrate    Run migrations on all services"
 	@echo "  fresh      Fresh install (rebuild + migrate)"
-	@echo "  test       Run tests"
+	@echo "  test       Run all tests (backend + frontend)"
+	@echo "  test-be    Run backend tests only"
+	@echo "  test-fe    Run frontend tests only"
 	@echo "  clean      Remove all containers and volumes"
 
 # Build all images
@@ -82,10 +84,22 @@ fresh: down
 	docker compose exec auth-service php artisan passport:install --force
 	@echo "Fresh install complete!"
 
-# Run tests
-test:
+# Run all tests
+test: test-be test-fe
+
+# Run backend tests
+test-be:
+	@echo "Running Auth Service tests..."
 	docker compose exec auth-service php artisan test
+	@echo "Running IP Service tests..."
 	docker compose exec ip-service php artisan test
+	@echo "Running Gateway tests..."
+	docker compose exec gateway php artisan test
+
+# Run frontend tests
+test-fe:
+	@echo "Running Frontend tests..."
+	cd frontend && npm run test:run
 
 # Clean everything
 clean:

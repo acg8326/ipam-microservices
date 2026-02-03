@@ -103,13 +103,17 @@ curl http://localhost:8000/api/ip-addresses \
 ## Testing
 
 ```bash
-# Frontend tests (Vitest)
-cd frontend && npm run test:run
+# Run all tests
+make test
 
-# Backend tests (PHPUnit) - run inside containers
-docker exec ipam-auth-service php artisan test
-docker exec ipam-ip-service php artisan test
+# Frontend only
+make test-fe
+
+# Backend only  
+make test-be
 ```
+
+See [Testing Guide](docs/testing.md) for detailed documentation.
 
 ## Documentation
 
@@ -117,6 +121,7 @@ docker exec ipam-ip-service php artisan test
 |----------|-------------|
 | [Features Overview](docs/features.md) | Complete feature list, security model, endpoints |
 | [Frontend Guide](docs/frontend.md) | Vue.js SPA architecture, components, state management |
+| [Testing Guide](docs/testing.md) | PHPUnit and Vitest setup, running tests, writing tests |
 | [Docker Setup](docs/docker.md) | Container configuration, commands, troubleshooting |
 | [Gateway Service](docs/gateway.md) | Routing, circuit breaker, rate limiting |
 | [Auth Service API](docs/auth-service.md) | Authentication endpoints, error responses |
