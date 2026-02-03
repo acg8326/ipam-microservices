@@ -32,3 +32,15 @@ services:
     environment:
       APP_ENV: local
       APP_DEBUG: true
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "${FRONTEND_PORT:-3000}:5173"
+    environment:
+      VITE_API_URL: http://localhost:8000/api

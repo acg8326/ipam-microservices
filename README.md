@@ -7,7 +7,7 @@ A microservices-based IP Address Management System built with Laravel and Vue.js
 ```mermaid
 flowchart TB
     subgraph Frontend
-        VUE[Vue.js Frontend]
+        VUE[Vue.js Frontend<br/>Port 3000]
     end
     
     subgraph Gateway
@@ -15,8 +15,8 @@ flowchart TB
     end
     
     subgraph Services
-        AUTH[Auth Service<br/>Port 8001]
-        IP[IP Service<br/>Port 8002]
+        AUTH[Auth Service]
+        IP[IP Service]
     end
     
     subgraph Databases
@@ -33,14 +33,15 @@ flowchart TB
 
 | Service | Port | Description |
 |---------|------|-------------|
+| Frontend | 3000 | Vue.js SPA user interface |
 | Gateway | 8000 | API routing, circuit breaker, rate limiting |
-| Auth Service | 8001 | JWT authentication, RBAC, user management |
-| IP Service | 8002 | IP address CRUD, tamper-proof audit logs |
+| Auth Service | internal | JWT authentication, RBAC, user management |
+| IP Service | internal | IP address CRUD, tamper-proof audit logs |
 
 ## Tech Stack
 
 - **Backend:** Laravel 12 / PHP 8.2
-- **Frontend:** Vue.js 3.5 *(pending)*
+- **Frontend:** Vue.js 3.5 + TypeScript + Pinia
 - **Database:** MySQL 8.0
 - **Auth:** Laravel Passport (OAuth2/JWT)
 - **Containerization:** Docker + Docker Compose
@@ -55,6 +56,10 @@ cp .env.example .env
 make up-build
 make fresh
 ```
+
+Access the application:
+- **Frontend:** http://localhost:3000
+- **API Gateway:** http://localhost:8000
 
 Verify services are running:
 ```bash
