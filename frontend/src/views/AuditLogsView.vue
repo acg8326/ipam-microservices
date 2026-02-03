@@ -148,44 +148,75 @@ onMounted(() => {
 
     <template v-else>
       <div class="logs-table-container">
-        <table class="logs-table">
-          <thead>
-            <tr>
-              <th>Timestamp</th>
-              <th>Action</th>
-              <th>Entity</th>
-              <th>User</th>
-              <th>IP Address</th>
-              <th>Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="log in filteredLogs" :key="log.id">
-              <td class="timestamp">{{ formatDate(log.created_at) }}</td>
-              <td>
-                <span class="badge" :class="getActionBadgeClass(log.action)">
-                  {{ log.action }}
-                </span>
-              </td>
-              <td>
-                <span v-if="log.entity_type">
-                  {{ log.entity_type }}
-                  <span v-if="log.entity_id" class="entity-id">#{{ log.entity_id }}</span>
-                </span>
-                <span v-else class="text-muted">-</span>
-              </td>
-              <td>{{ log.user_email }}</td>
-              <td class="ip-address">{{ log.ip_address || '-' }}</td>
-              <td class="details">
-                <details v-if="log.old_values || log.new_values">
-                  <summary>View changes</summary>
-                  <pre class="changes-pre">{{ formatChanges(log.old_values, log.new_values) }}</pre>
-                </details>
-                <span v-else class="text-muted">-</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <!-- Desktop Table -->
+        <div class="table-responsive">
+          <table class="logs-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Action</th>
+                <th>Entity</th>
+                <th class="hide-tablet">User</th>
+                <th class="hide-tablet">IP Address</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="log in filteredLogs" :key="log.id">
+                <td class="timestamp">{{ formatDate(log.created_at) }}</td>
+                <td>
+                  <span class="badge" :class="getActionBadgeClass(log.action)">
+                    {{ log.action }}
+                  </span>
+                </td>
+                <td>
+                  <span v-if="log.entity_type">
+                    {{ log.entity_type }}
+                    <span v-if="log.entity_id" class="entity-id">#{{ log.entity_id }}</span>
+                  </span>
+                  <span v-else class="text-muted">-</span>
+                </td>
+                <td class="hide-tablet">{{ log.user_email }}</td>
+                <td class="hide-tablet"><span class="ip-address">{{ log.ip_address || '-' }}</span></td>
+                <td class="details">
+                  <details v-if="log.old_values || log.new_values">
+                    <summary>View changes</summary>
+                    <pre class="changes-pre">{{ formatChanges(log.old_values, log.new_values) }}</pre>
+                  </details>
+                  <span v-else class="text-muted">-</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Mobile Card View -->
+        <div class="mobile-logs">
+          <div v-for="log in filteredLogs" :key="'mobile-' + log.id" class="mobile-log-card">
+            <div class="mobile-log-card__header">
+              <span class="badge" :class="getActionBadgeClass(log.action)">{{ log.action }}</span>
+              <span class="mobile-log-card__timestamp">{{ formatDate(log.created_at) }}</span>
+            </div>
+            <div class="mobile-log-card__body">
+              <div class="mobile-log-card__row">
+                <span class="mobile-log-card__label">User</span>
+                <span class="mobile-log-card__value">{{ log.user_email }}</span>
+              </div>
+              <div v-if="log.entity_type" class="mobile-log-card__row">
+                <span class="mobile-log-card__label">Entity</span>
+                <span class="mobile-log-card__value">{{ log.entity_type }} <span v-if="log.entity_id" class="entity-id">#{{ log.entity_id }}</span></span>
+              </div>
+              <div v-if="log.ip_address" class="mobile-log-card__row">
+                <span class="mobile-log-card__label">IP</span>
+                <span class="mobile-log-card__value"><span class="ip-address">{{ log.ip_address }}</span></span>
+              </div>
+              <details v-if="log.old_values || log.new_values" style="margin-top: 0.75rem;">
+                <summary style="font-size: 0.8125rem; color: #22c55e; font-weight: 600; cursor: pointer;">View changes</summary>
+                <pre class="changes-pre">{{ formatChanges(log.old_values, log.new_values) }}</pre>
+              </details>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Pagination -->
@@ -222,27 +253,32 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  gap: 1rem;
 }
 
 .page-header__title {
-  font-size: 1.875rem;
-  font-weight: bold;
-  color: #1f2937;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
   margin: 0 0 0.25rem;
+  letter-spacing: -0.025em;
 }
 
 .page-header__subtitle {
-  color: #6b7280;
+  color: #64748b;
   margin: 0;
+  font-size: 0.9375rem;
 }
 
 .total-count {
-  background: #f3f4f6;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  padding: 0.625rem 1.25rem;
+  border-radius: 10px;
   font-size: 0.875rem;
-  color: #4b5563;
+  color: #475569;
+  font-weight: 600;
+  border: 1px solid #e2e8f0;
 }
 
 /* Filters */
@@ -251,43 +287,58 @@ onMounted(() => {
   gap: 1rem;
   margin-bottom: 1.5rem;
   background: #fff;
-  padding: 1rem;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.25rem;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f1f5f9;
+  flex-wrap: wrap;
 }
 
 .filter-group {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.375rem;
+  flex: 1;
+  min-width: 200px;
 }
 
 .filter-label {
   font-size: 0.75rem;
-  font-weight: 500;
-  color: #6b7280;
+  font-weight: 600;
+  color: #64748b;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .filter-input {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  min-width: 200px;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  transition: all 0.2s ease;
 }
 
 .filter-input:focus {
   outline: none;
   border-color: #4ade80;
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.15);
+}
+
+.filter-input::placeholder {
+  color: #94a3b8;
 }
 
 /* Table */
 .logs-table-container {
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f1f5f9;
   overflow: hidden;
+}
+
+.table-responsive {
+  overflow-x: auto;
 }
 
 .logs-table {
@@ -297,15 +348,15 @@ onMounted(() => {
 
 .logs-table th,
 .logs-table td {
-  padding: 0.875rem 1rem;
+  padding: 1rem 1.25rem;
   text-align: left;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .logs-table th {
-  background: #f9fafb;
+  background: #f8fafc;
   font-weight: 600;
-  color: #374151;
+  color: #64748b;
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -313,41 +364,53 @@ onMounted(() => {
 
 .logs-table td {
   font-size: 0.875rem;
-  color: #1f2937;
+  color: #0f172a;
+}
+
+.logs-table tbody tr {
+  transition: background-color 0.15s ease;
 }
 
 .logs-table tbody tr:hover {
-  background-color: #f9fafb;
+  background-color: #f8fafc;
+}
+
+.logs-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 .timestamp {
   white-space: nowrap;
-  font-family: monospace;
+  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
   font-size: 0.8125rem;
-  color: #6b7280;
+  color: #64748b;
 }
 
 .ip-address {
-  font-family: monospace;
+  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
   font-size: 0.8125rem;
+  background: #f1f5f9;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
 }
 
 .entity-id {
-  color: #6b7280;
+  color: #64748b;
   font-size: 0.8125rem;
 }
 
 .text-muted {
-  color: #9ca3af;
+  color: #94a3b8;
 }
 
 /* Badges */
 .badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   padding: 0.25rem 0.625rem;
   border-radius: 9999px;
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .badge--blue {
@@ -371,8 +434,8 @@ onMounted(() => {
 }
 
 .badge--gray {
-  background-color: #f3f4f6;
-  color: #4b5563;
+  background-color: #f1f5f9;
+  color: #475569;
 }
 
 /* Details */
@@ -382,24 +445,27 @@ onMounted(() => {
 
 .details summary {
   font-size: 0.8125rem;
-  color: #4ade80;
-  font-weight: 500;
+  color: #22c55e;
+  font-weight: 600;
+  transition: color 0.15s ease;
 }
 
 .details summary:hover {
-  color: #22c55e;
+  color: #16a34a;
 }
 
 .changes-pre {
   margin-top: 0.5rem;
-  padding: 0.5rem;
-  background: #f9fafb;
-  border-radius: 4px;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 8px;
   font-size: 0.75rem;
   max-width: 300px;
   overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-all;
+  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+  border: 1px solid #e2e8f0;
 }
 
 /* Pagination */
@@ -409,20 +475,29 @@ onMounted(() => {
   align-items: center;
   gap: 1rem;
   margin-top: 1.5rem;
+  padding: 1rem;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
 }
 
 .pagination__btn {
-  padding: 0.5rem 1rem;
-  background: #fff;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
   font-size: 0.875rem;
+  font-weight: 600;
+  color: #475569;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .pagination__btn:hover:not(:disabled) {
-  background: #f3f4f6;
+  background: #e2e8f0;
 }
 
 .pagination__btn:disabled {
@@ -432,7 +507,7 @@ onMounted(() => {
 
 .pagination__info {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #64748b;
 }
 
 /* States */
@@ -443,21 +518,26 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem;
+  padding: 4rem 2rem;
   text-align: center;
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f1f5f9;
+  gap: 0.5rem;
+}
+
+.loading-state {
+  gap: 1rem;
 }
 
 .spinner {
-  width: 2rem;
-  height: 2rem;
-  border: 3px solid #e5e7eb;
+  width: 48px;
+  height: 48px;
+  border: 3px solid #f1f5f9;
   border-top-color: #4ade80;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
-  margin-bottom: 1rem;
 }
 
 @keyframes spin {
@@ -465,42 +545,159 @@ onMounted(() => {
 }
 
 .empty-state__icon {
-  width: 4rem;
-  height: 4rem;
-  color: #d1d5db;
-  margin-bottom: 1rem;
+  width: 56px;
+  height: 56px;
+  color: #cbd5e1;
+  margin-bottom: 0.5rem;
 }
 
 .empty-state__title {
   font-size: 1.125rem;
-  font-weight: 600;
-  color: #374151;
-  margin: 0 0 0.25rem;
-}
-
-.empty-state__description {
-  color: #6b7280;
+  font-weight: 700;
+  color: #0f172a;
   margin: 0;
 }
 
+.empty-state__description {
+  color: #64748b;
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
 .error-state {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
   color: #dc2626;
 }
 
 .btn {
-  padding: 0.625rem 1.25rem;
-  border-radius: 8px;
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  font-weight: 600;
   cursor: pointer;
   border: none;
+  font-size: 0.875rem;
+  margin-top: 1rem;
 }
 
 .btn--primary {
-  background-color: #4ade80;
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
   color: #fff;
+  box-shadow: 0 2px 8px rgba(74, 222, 128, 0.3);
 }
 
 .btn--primary:hover {
-  background-color: #22c55e;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(74, 222, 128, 0.4);
+}
+
+/* Mobile Cards */
+.mobile-logs {
+  display: none;
+}
+
+.mobile-log-card {
+  background: #fff;
+  border: 1px solid #f1f5f9;
+  border-radius: 16px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.mobile-log-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.mobile-log-card__timestamp {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-family: 'SF Mono', 'Menlo', monospace;
+}
+
+.mobile-log-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mobile-log-card__row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+}
+
+.mobile-log-card__label {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.mobile-log-card__value {
+  color: #0f172a;
+  text-align: right;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .hide-tablet {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .page-header__title {
+    font-size: 1.5rem;
+  }
+
+  .filters {
+    flex-direction: column;
+  }
+
+  .filter-group {
+    min-width: auto;
+  }
+
+  /* Hide table, show mobile cards */
+  .table-responsive {
+    display: none;
+  }
+
+  .mobile-logs {
+    display: block;
+    padding: 1rem;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .pagination__info {
+    width: 100%;
+    text-align: center;
+    order: -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-header__title {
+    font-size: 1.25rem;
+  }
+
+  .total-count {
+    width: 100%;
+    text-align: center;
+  }
 }
 </style>
