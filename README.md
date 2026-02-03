@@ -47,6 +47,28 @@ flowchart TB
 - **Containerization:** Docker + Docker Compose
 - **Testing:** PHPUnit (backend) + Vitest (frontend)
 
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+| Requirement | Version | Notes |
+|-------------|---------|-------|
+| **Docker** | 20.10+ | [Install Docker](https://docs.docker.com/get-docker/) |
+| **Docker Compose** | v2+ | Included with Docker Desktop |
+| **Git** | 2.0+ | For cloning the repository |
+
+### Windows Users
+- Install [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)
+- Enable WSL 2 backend (recommended) or Hyper-V
+- Ensure Docker Desktop is running before executing commands
+
+### Linux Users
+- Install Docker Engine and Docker Compose plugin
+- Add your user to the docker group: `sudo usermod -aG docker $USER`
+
+### macOS Users
+- Install [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/)
+
 ## Quick Start
 
 ### Option 1: Using Make (Linux/macOS)
