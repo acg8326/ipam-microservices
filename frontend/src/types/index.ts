@@ -21,60 +21,21 @@ export interface AuthResponse {
 }
 
 // IP Address Management Types
-export interface Subnet {
-  id: number
-  name: string
-  network: string
-  cidr: number
-  gateway: string | null
-  vlan_id: number | null
-  description: string | null
-  parent_id: number | null
-  location_id: number | null
-  total_addresses: number
-  used_addresses: number
-  available_addresses: number
-  utilization_percent: number
-  children?: Subnet[]
-  created_at: string
-  updated_at: string
-}
-
 export interface IPAddress {
   id: number
-  subnet_id: number
   ip_address: string
-  hostname: string | null
-  mac_address: string | null
-  status: 'available' | 'reserved' | 'assigned' | 'dhcp'
-  device_type: string | null
-  description: string | null
-  assigned_to: string | null
-  last_seen: string | null
+  label: string
+  comment: string | null
+  created_by: number
+  created_by_name?: string
   created_at: string
   updated_at: string
 }
 
-export interface VLAN {
-  id: number
-  vlan_number: number
-  name: string
-  description: string | null
-  location_id: number | null
-  created_at: string
-  updated_at: string
-}
-
-export interface Location {
-  id: number
-  name: string
-  code: string
-  address: string | null
-  description: string | null
-  parent_id: number | null
-  children?: Location[]
-  created_at: string
-  updated_at: string
+export interface IPAddressForm {
+  ip_address?: string
+  label: string
+  comment: string | null
 }
 
 // API Response Types
@@ -103,41 +64,30 @@ export interface ApiError {
 
 // Dashboard Types
 export interface DashboardStats {
-  total_subnets: number
   total_ips: number
-  assigned_ips: number
-  available_ips: number
-  utilization_percent: number
-  recent_assignments: IPAddress[]
-  subnet_utilization: SubnetUtilization[]
+  my_ips: number
+  recent_activity: RecentActivity[]
 }
 
-export interface SubnetUtilization {
-  subnet_id: number
-  subnet_name: string
-  network: string
-  utilization_percent: number
-}
-
-// Form Types
-export interface SubnetForm {
-  name: string
-  network: string
-  cidr: number
-  gateway?: string
-  vlan_id?: number
-  description?: string
-  parent_id?: number
-  location_id?: number
-}
-
-export interface IPAddressForm {
-  subnet_id: number
+export interface RecentActivity {
+  id: number
+  action: 'create' | 'update' | 'delete'
   ip_address: string
-  hostname?: string
-  mac_address?: string
-  status: 'available' | 'reserved' | 'assigned' | 'dhcp'
-  device_type?: string
-  description?: string
-  assigned_to?: string
+  label: string
+  user_name: string
+  created_at: string
+}
+
+// Audit Log Types
+export interface AuditLog {
+  id: number
+  user_id: number
+  user_name: string
+  action: string
+  entity_type: string
+  entity_id: number | null
+  ip_address: string | null
+  old_values: Record<string, any> | null
+  new_values: Record<string, any> | null
+  created_at: string
 }
