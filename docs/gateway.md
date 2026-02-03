@@ -11,8 +11,9 @@ API Gateway service that routes requests to backend services with built-in resil
 - Circuit breaker with automatic recovery
 - Health check monitoring
 - Request logging with tracing
-- Rate limiting (60 requests/minute)
+- Tiered rate limiting (security-focused)
 - Timeout handling (10 seconds)
+- File-based caching (no database required)
 
 ## Endpoints
 
@@ -100,7 +101,18 @@ The gateway implements a circuit breaker pattern to handle service failures grac
 
 ## Rate Limiting
 
-All routes (except health check) are rate limited to 60 requests per minute per client.
+Routes have tiered rate limits based on their security sensitivity:
+
+| Tier | Limit | Endpoints |
+|------|-------|----------|
+| High | 300/min | `/auth/user`, `/auth/refresh` (called on every page load) |
+| Medium | 120/min | All GET endpoints (dashboard, IP list, audit logs) |
+| Strict | 30/min | Write operations (login, register, create, update, delete) |
+
+The strict limit on write operations provides protection against:
+- Brute force login attacks
+- Credential stuffing
+- API abuse and spam
 
 **Response when rate limited:** `429 Too Many Requests`
 ```json

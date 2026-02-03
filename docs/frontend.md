@@ -99,21 +99,32 @@ frontend/
 
 ### Auth Store (`stores/auth.ts`)
 
-Manages authentication state and user session.
+Manages authentication state and user session using Vue 3 Composition API.
 
 ```typescript
-interface AuthState {
-  user: User | null;
-  token: string | null;
-  isAuthenticated: boolean;
-}
+// State
+const user = ref<User | null>(null)
+const loading = ref(false)
+const error = ref<string | null>(null)
+const initialized = ref(false)  // Tracks if auth state has been checked
+
+// Computed
+const isAuthenticated = computed(() => !!user.value)
+const isAdmin = computed(() => user.value?.role === 'admin')
+const isOperator = computed(() => ['admin', 'operator'].includes(user.value?.role || ''))
 
 // Actions
-login(email: string, password: string): Promise<void>
-logout(): void
-checkAuth(): Promise<void>
-refreshToken(): Promise<void>
+login(credentials: LoginCredentials): Promise<AuthResponse>
+logout(): Promise<void>
+fetchUser(): Promise<void>       // Fetches current user from /auth/user
+initialize(): Promise<void>      // Called on app start, checks localStorage token
 ```
+
+**Key Features:**
+- `initialized` flag prevents multiple auth checks on page load
+- Token stored in `localStorage` with expiry timestamp
+- Automatic token refresh before expiration
+- Graceful handling of 401 errors during initialization
 
 ### IP Addresses Store (`stores/ipAddresses.ts`)
 
@@ -150,57 +161,69 @@ const routes = [
 ### Navigation Guards
 
 ```typescript
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore();
   
-  // Redirect to login if not authenticated
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    return next('/login');
+  // Initialize auth state if not done (checks localStorage token)
+  if (!authStore.initialized) {
+    await authStore.initialize();
   }
-  
-  // Redirect to home if admin required but user is not admin
-  if (to.meta.requiresAdmin && authStore.user?.role !== 'admin') {
-    return next('/');
+
+  const isAuthenticated = authStore.isAuthenticated;
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+  const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin);
+  const isGuestRoute = to.matched.some(record => record.meta.guest);
+
+  if (requiresAuth && !isAuthenticated) {
+    next({ name: 'login', query: { redirect: to.fullPath } });
+  } else if (isGuestRoute && isAuthenticated) {
+    next({ name: 'dashboard' });
+  } else if (requiresAdmin && !authStore.isAdmin) {
+    next({ name: 'dashboard' });
+  } else {
+    next();
   }
-  
-  next();
 });
 ```
+
+**Key Features:**
+- Async guard waits for `initialize()` before checking auth
+- `initialized` flag ensures auth check only runs once per session
+- Supports redirect back to original URL after login
 
 ## API Integration
 
-### Base Configuration (`services/api.ts`)
+### API Client (`api/client.ts`)
+
+Custom fetch-based API client with built-in authentication and token management.
 
 ```typescript
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  },
-});
-
-// Request interceptor - add auth token
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Response interceptor - handle 401 errors
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Redirect to login
-      router.push('/login');
-    }
-    return Promise.reject(error);
-  }
-);
+class ApiClient {
+  private baseUrl: string
+  private token: string | null
+  private tokenExpiry: number | null
+  
+  // Token management
+  setToken(token: string | null, expiresIn?: number): void
+  getToken(): string | null
+  isTokenExpiringSoon(): boolean  // True if < 5 min remaining
+  isTokenExpired(): boolean       // True if past expiry time
+  
+  // HTTP methods
+  get<T>(endpoint: string): Promise<T>
+  post<T>(endpoint: string, data?: unknown): Promise<T>
+  put<T>(endpoint: string, data?: unknown): Promise<T>
+  delete<T>(endpoint: string): Promise<T>
+}
 ```
+
+**Key Features:**
+- Token stored in `localStorage` with expiry timestamp
+- Automatic `Authorization: Bearer` header injection
+- Background token refresh timer (checks every 60 seconds)
+- Proactive refresh when token expires in < 5 minutes
+- 401 retry: attempts token refresh, then retries original request
+- Special handling for `/auth/user` endpoint (no redirect on 401 during init)
 
 ### Automatic Token Refresh
 

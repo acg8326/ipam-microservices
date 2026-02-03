@@ -159,9 +159,12 @@
 - Status values: healthy, degraded, unreachable, circuit_open
 
 ### Rate Limiting
-- 60 requests per minute per client
-- Applied to all routes except health check
+- Tiered rate limits based on endpoint sensitivity:
+  - Auth session endpoints: 300/min (high frequency)
+  - Read operations: 120/min (moderate)
+  - Write operations: 30/min (strict - prevents brute force)
 - Returns 429 when limit exceeded
+- File-based cache storage (no database lock issues)
 
 ### Request Logging
 - Unique request ID for tracing
