@@ -5,23 +5,42 @@ namespace App\Services;
 use App\Models\AuditLog;
 use App\Models\IpAddress;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Http;
 
 class IpAddressService
 {
     public function list(?string $search = null): LengthAwarePaginator
     {
-        $query = IpAddress::query();
+        $query = IpAddress::query()->orderBy('created_at', 'desc');
 
         if ($search) {
             $query->search($search);
         }
 
-        return $query->paginate(15);
+        $paginated = $query->paginate(15);
+        
+        // Fetch user names for created_by
+        $userIds = $paginated->pluck('created_by')->unique()->filter()->values()->toArray();
+        $userNames = $this->fetchUserNames($userIds);
+        
+        // Add created_by_name to each item
+        $paginated->getCollection()->transform(function ($ip) use ($userNames) {
+            $ip->created_by_name = $userNames[$ip->created_by] ?? 'Unknown';
+            return $ip;
+        });
+
+        return $paginated;
     }
 
     public function find(int $id): IpAddress
     {
-        return IpAddress::findOrFail($id);
+        $ipAddress = IpAddress::findOrFail($id);
+        
+        // Add created_by_name
+        $userNames = $this->fetchUserNames([$ipAddress->created_by]);
+        $ipAddress->created_by_name = $userNames[$ipAddress->created_by] ?? 'Unknown';
+        
+        return $ipAddress;
     }
 
     public function create(array $data, array $user, ?string $sessionId = null, ?string $clientIp = null): IpAddress
@@ -45,15 +64,27 @@ class IpAddressService
             $clientIp
         );
 
+        $ipAddress->created_by_name = $user['name'] ?? $user['email'];
+        
         return $ipAddress;
     }
 
     public function update(IpAddress $ipAddress, array $data, array $user, ?string $sessionId = null, ?string $clientIp = null): IpAddress
     {
+        // Get a fresh model without appended attributes
+        $ipAddress = IpAddress::findOrFail($ipAddress->id);
         $oldValues = $ipAddress->toArray();
         
-        $data['updated_by'] = $user['id'];
-        $ipAddress->update($data);
+        $updateData = [
+            'label' => $data['label'],
+            'updated_by' => $user['id'],
+        ];
+        
+        if (array_key_exists('comment', $data)) {
+            $updateData['comment'] = $data['comment'];
+        }
+        
+        $ipAddress->update($updateData);
 
         AuditLog::log(
             'updated',
@@ -67,7 +98,11 @@ class IpAddressService
             $clientIp
         );
 
-        return $ipAddress->fresh();
+        $fresh = $ipAddress->fresh();
+        $userNames = $this->fetchUserNames([$fresh->created_by]);
+        $fresh->created_by_name = $userNames[$fresh->created_by] ?? 'Unknown';
+        
+        return $fresh;
     }
 
     public function delete(IpAddress $ipAddress, array $user, ?string $sessionId = null, ?string $clientIp = null): void
@@ -98,5 +133,28 @@ class IpAddressService
     public function canUserDelete(array $user): bool
     {
         return $user['role'] === 'admin';
+    }
+    
+    private function fetchUserNames(array $userIds): array
+    {
+        if (empty($userIds)) {
+            return [];
+        }
+        
+        try {
+            $authServiceUrl = config('services.auth.url', 'http://auth-service');
+            $response = Http::get("{$authServiceUrl}/api/users/names", [
+                'ids' => implode(',', $userIds),
+            ]);
+            
+            if ($response->successful()) {
+                return $response->json('users', []);
+            }
+        } catch (\Exception $e) {
+            // Log error but don't fail the request
+            \Log::warning('Failed to fetch user names: ' . $e->getMessage());
+        }
+        
+        return [];
     }
 }
