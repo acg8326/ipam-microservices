@@ -62,10 +62,11 @@
 |--------|--------------|-------|
 | View all IPs | Yes | Yes |
 | Create IP | Yes | Yes |
-| Update own IP (label only) | Yes | Yes |
-| Update any IP (all fields) | No | Yes |
+| Update own IP (all fields) | Yes | Yes |
+| Update others' IP (label/comment only) | No | Yes |
 | Delete any IP | No | Yes |
 | View audit logs | No | Yes |
+| Dashboard: Recent Activity | Own activity only | All activity |
 
 ### Audit Logging
 - Automatic logging of all CRUD operations

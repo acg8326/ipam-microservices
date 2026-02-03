@@ -149,18 +149,18 @@ HTTP/1.1 429 Too Many Requests
 
 ```php
 // services/gateway/config/cors.php
-'allowed_origins' => env('CORS_ALLOWED_ORIGINS', 'http://localhost:3000'),
+'allowed_origins' => env('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000'),
 'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-'allowed_headers' => ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+'allowed_headers' => ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'X-Session-ID'],
 ```
 
 ### Security Measures
 
 | Setting | Value | Purpose |
 |---------|-------|---------|
-| `allowed_origins` | Configurable (default: localhost:3000) | Prevents unauthorized domains |
+| `allowed_origins` | Configurable (default: localhost:3000, 127.0.0.1:3000) | Prevents unauthorized domains |
 | `allowed_methods` | Specific verbs only | Limits attack surface |
-| `allowed_headers` | Required headers only | Prevents header injection |
+| `allowed_headers` | Content-Type, Authorization, Accept, X-Requested-With, X-Session-ID | Session tracking + auth |
 | `supports_credentials` | false | No cookie-based auth |
 
 ### Production Configuration

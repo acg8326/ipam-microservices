@@ -92,14 +92,7 @@ PUT /api/ip-addresses/{id}
 Authorization: Bearer {token}
 ```
 
-**Request (Regular User):**
-```json
-{
-    "label": "Updated Label"
-}
-```
-
-**Request (Admin):**
+**Request (Owner or Admin - can update IP address):**
 ```json
 {
     "ip_address": "192.168.1.200",
@@ -107,6 +100,16 @@ Authorization: Bearer {token}
     "comment": "Updated comment"
 }
 ```
+
+**Request (Non-owner - label/comment only):**
+```json
+{
+    "label": "Updated Label",
+    "comment": "Updated comment"
+}
+```
+
+> **Note:** Users can modify the IP address field for IPs they created. Admins can modify any IP.
 
 **Response:** `200 OK`
 ```json

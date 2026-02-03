@@ -13,12 +13,20 @@ class DashboardController extends Controller
     public function stats(Request $request): JsonResponse
     {
         $user = $request->attributes->get('user');
+        $isAdmin = $user['role'] === 'admin';
         
         $totalIps = IpAddress::count();
         $myIps = IpAddress::where('created_by', $user['id'])->count();
 
         // Get recent activity from audit logs
-        $recentActivity = AuditLog::where('entity_type', 'ip_address')
+        // Admins see all activity, regular users see only their own
+        $activityQuery = AuditLog::where('entity_type', 'ip_address');
+        
+        if (!$isAdmin) {
+            $activityQuery->where('user_id', $user['id']);
+        }
+        
+        $recentActivity = $activityQuery
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get()
