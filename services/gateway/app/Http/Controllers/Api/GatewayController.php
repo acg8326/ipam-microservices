@@ -98,40 +98,4 @@ class GatewayController extends Controller
     {
         return $this->gateway->forwardToIpService($request, '/api/dashboard/stats', 'GET');
     }
-
-    // Subnet routes
-    public function subnetIndex(Request $request): JsonResponse
-    {
-        return $this->gateway->forwardToIpService($request, '/api/subnets', 'GET');
-    }
-
-    public function subnetStore(Request $request): JsonResponse
-    {
-        return $this->gateway->forwardToIpService($request, '/api/subnets', 'POST');
-    }
-
-    public function subnetTree(Request $request): JsonResponse
-    {
-        return $this->gateway->forwardToIpService($request, '/api/subnets/tree', 'GET');
-    }
-
-    public function subnetShow(Request $request, int $id): JsonResponse
-    {
-        return $this->gateway->forwardToIpService($request, "/api/subnets/{$id}", 'GET');
-    }
-
-    public function subnetUpdate(Request $request, int $id): JsonResponse
-    {
-        return $this->gateway->forwardToIpService($request, "/api/subnets/{$id}", 'PUT');
-    }
-
-    public function subnetDestroy(Request $request, int $id): JsonResponse
-    {
-        return $this->gateway->forwardToIpService($request, "/api/subnets/{$id}", 'DELETE');
-    }
-
-    public function subnetIpAddresses(Request $request, int $id): JsonResponse
-    {
-        return $this->gateway->forwardToIpService($request, "/api/subnets/{$id}/ip-addresses", 'GET');
-    }
 }

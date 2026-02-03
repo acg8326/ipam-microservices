@@ -3,55 +3,40 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\IpAddress;
-use App\Models\Subnet;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function stats(): JsonResponse
+    public function stats(Request $request): JsonResponse
     {
-        $totalSubnets = Subnet::count();
+        $user = $request->attributes->get('user');
+        
         $totalIps = IpAddress::count();
-        $assignedIps = IpAddress::where('status', 'assigned')->count();
-        $reservedIps = IpAddress::where('status', 'reserved')->count();
-        $availableIps = IpAddress::where('status', 'available')->count();
-        $dhcpIps = IpAddress::where('status', 'dhcp')->count();
+        $myIps = IpAddress::where('created_by', $user['id'])->count();
 
-        $usedIps = $assignedIps + $reservedIps + $dhcpIps;
-        $utilizationPercent = $totalIps > 0 
-            ? round(($usedIps / $totalIps) * 100, 1) 
-            : 0;
-
-        // Get recent assignments
-        $recentAssignments = IpAddress::where('status', 'assigned')
-            ->orderBy('updated_at', 'desc')
-            ->limit(10)
-            ->get();
-
-        // Get subnet utilization
-        $subnetUtilization = Subnet::orderBy('name')
+        // Get recent activity from audit logs
+        $recentActivity = AuditLog::where('entity_type', 'ip_address')
+            ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get()
-            ->map(function ($subnet) {
+            ->map(function ($log) {
                 return [
-                    'subnet_id' => $subnet->id,
-                    'subnet_name' => $subnet->name,
-                    'network' => "{$subnet->network}/{$subnet->cidr}",
-                    'utilization_percent' => $subnet->utilization_percent,
+                    'id' => $log->id,
+                    'action' => str_replace(['created', 'updated', 'deleted'], ['create', 'update', 'delete'], $log->action),
+                    'ip_address' => $log->new_values['ip_address'] ?? $log->old_values['ip_address'] ?? 'N/A',
+                    'label' => $log->new_values['label'] ?? $log->old_values['label'] ?? 'N/A',
+                    'user_name' => $log->user_email,
+                    'created_at' => $log->created_at->toISOString(),
                 ];
             });
 
         return response()->json([
-            'total_subnets' => $totalSubnets,
             'total_ips' => $totalIps,
-            'assigned_ips' => $assignedIps,
-            'reserved_ips' => $reservedIps,
-            'available_ips' => $availableIps,
-            'dhcp_ips' => $dhcpIps,
-            'utilization_percent' => $utilizationPercent,
-            'recent_assignments' => $recentAssignments,
-            'subnet_utilization' => $subnetUtilization,
+            'my_ips' => $myIps,
+            'recent_activity' => $recentActivity,
         ]);
     }
 }
