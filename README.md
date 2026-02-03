@@ -110,6 +110,57 @@ curl http://localhost:8000/api/health
 
 See [Docker Documentation](docs/docker.md) for detailed setup, commands, and troubleshooting.
 
+## Post-Installation
+
+After running `make fresh` (or the Docker Compose commands), the system is ready to use.
+
+### 1. Access the Application
+
+Open your browser and go to: **http://localhost:3000**
+
+### 2. Login
+
+Use one of the default accounts:
+
+| Role | Email | Password | Permissions |
+|------|-------|----------|-------------|
+| **Admin** | admin@example.com | password123 | Full access - can manage all IPs, users, and view audit logs |
+| **User** | user@example.com | password123 | Can add IPs, edit own IPs only, view all IPs |
+
+### 3. Explore Features
+
+**As Admin (admin@example.com):**
+- ✅ View dashboard with system statistics
+- ✅ Add, edit, delete any IP address
+- ✅ Manage users (create, edit roles)
+- ✅ View audit logs with tamper-proof verification
+- ✅ Filter audit logs by user, session, or IP address
+
+**As Regular User (user@example.com):**
+- ✅ View dashboard
+- ✅ View all IP addresses
+- ✅ Add new IP addresses
+- ✅ Edit only IP addresses you created
+- ❌ Cannot delete IP addresses
+- ❌ Cannot access audit logs or user management
+
+### 4. Verify Health (Optional)
+
+```bash
+curl http://localhost:8000/api/health
+```
+
+Expected response:
+```json
+{
+  "gateway": "healthy",
+  "services": {
+    "auth": {"status": "healthy"},
+    "ip": {"status": "healthy"}
+  }
+}
+```
+
 ## Features
 
 - **Authentication:** JWT-based login with automatic token refresh
