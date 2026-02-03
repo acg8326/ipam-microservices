@@ -12,12 +12,8 @@ const userMenuOpen = ref(false)
 const user = computed(() => authStore.user)
 
 const navigation = [
-  { name: 'Dashboard', path: '/', icon: 'dashboard' },
-  { name: 'Subnets', path: '/subnets', icon: 'network' },
-  { name: 'IP Addresses', path: '/ip-addresses', icon: 'ip' },
-  { name: 'VLANs', path: '/vlans', icon: 'vlan' },
-  { name: 'Locations', path: '/locations', icon: 'location' },
-  { name: 'Search', path: '/search', icon: 'search' },
+  { name: 'Dashboard', path: '/', icon: 'D' },
+  { name: 'IP Addresses', path: '/ip-addresses', icon: 'IP' },
 ]
 
 async function logout() {
@@ -49,8 +45,19 @@ function toggleSidebar() {
           class="sidebar__link"
           :title="item.name"
         >
-          <span class="sidebar__icon">{{ item.icon.charAt(0).toUpperCase() }}</span>
+          <span class="sidebar__icon">{{ item.icon }}</span>
           <span v-if="sidebarOpen" class="sidebar__text">{{ item.name }}</span>
+        </router-link>
+        
+        <!-- Admin-only: Audit Logs -->
+        <router-link
+          v-if="authStore.isAdmin"
+          to="/audit-logs"
+          class="sidebar__link"
+          title="Audit Logs"
+        >
+          <span class="sidebar__icon">A</span>
+          <span v-if="sidebarOpen" class="sidebar__text">Audit Logs</span>
         </router-link>
       </nav>
       

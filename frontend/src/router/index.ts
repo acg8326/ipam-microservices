@@ -21,35 +21,15 @@ const router = createRouter({
           component: () => import('@/views/DashboardView.vue'),
         },
         {
-          path: 'subnets',
-          name: 'subnets',
-          component: () => import('@/views/SubnetsView.vue'),
-        },
-        {
-          path: 'subnets/:id',
-          name: 'subnet-detail',
-          component: () => import('@/views/SubnetDetailView.vue'),
-          props: true,
-        },
-        {
           path: 'ip-addresses',
           name: 'ip-addresses',
           component: () => import('@/views/IPAddressesView.vue'),
         },
         {
-          path: 'vlans',
-          name: 'vlans',
-          component: () => import('@/views/VLANsView.vue'),
-        },
-        {
-          path: 'locations',
-          name: 'locations',
-          component: () => import('@/views/LocationsView.vue'),
-        },
-        {
-          path: 'search',
-          name: 'search',
-          component: () => import('@/views/SearchView.vue'),
+          path: 'audit-logs',
+          name: 'audit-logs',
+          component: () => import('@/views/AuditLogsView.vue'),
+          meta: { requiresAdmin: true },
         },
         {
           path: 'settings',
