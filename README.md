@@ -54,13 +54,18 @@ flowchart TB
 git clone https://github.com/acg8326/ipam-microservices.git
 cd ipam-microservices
 cp .env.example .env
-make up-build
 make fresh
 ```
 
 Access the application:
 - **Frontend:** http://localhost:3000
 - **API Gateway:** http://localhost:8000
+
+**Default Login Credentials:**
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@example.com | password123 |
+| User | user@example.com | password123 |
 
 Verify services are running:
 ```bash

@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs shell migrate fresh test
+.PHONY: help build up down restart logs shell migrate seed fresh test
 
 # Default target
 help:
@@ -19,7 +19,8 @@ help:
 	@echo "  shell-ip   Shell into IP service"
 	@echo "  shell-gw   Shell into gateway"
 	@echo "  migrate    Run migrations on all services"
-	@echo "  fresh      Fresh install (rebuild + migrate)"
+	@echo "  seed       Seed database with default users"
+	@echo "  fresh      Fresh install (rebuild + migrate + seed)"
 	@echo "  test       Run all tests (backend + frontend)"
 	@echo "  test-be    Run backend tests only"
 	@echo "  test-fe    Run frontend tests only"
@@ -73,6 +74,13 @@ migrate:
 	docker compose exec auth-service php artisan migrate --force
 	docker compose exec ip-service php artisan migrate --force
 
+# Seed database with default users
+seed:
+	docker compose exec auth-service php artisan db:seed --force
+	@echo "Database seeded with default users:"
+	@echo "  Admin: admin@example.com / password123"
+	@echo "  User:  user@example.com / password123"
+
 # Fresh install
 fresh: down
 	docker compose down -v
@@ -81,8 +89,14 @@ fresh: down
 	@echo "Waiting for services to start..."
 	sleep 10
 	$(MAKE) migrate
+	$(MAKE) seed
 	docker compose exec auth-service php artisan passport:install --force
+	@echo ""
 	@echo "Fresh install complete!"
+	@echo ""
+	@echo "Default login credentials:"
+	@echo "  Admin: admin@example.com / password123"
+	@echo "  User:  user@example.com / password123"
 
 # Run all tests
 test: test-be test-fe

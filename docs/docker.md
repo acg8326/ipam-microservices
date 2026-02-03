@@ -45,12 +45,20 @@ cd ipam-microservices
 # Copy environment file
 cp .env.example .env
 
-# Build and start all services
-make up-build
-
-# Or without Make
-docker compose up -d --build
+# Fresh install (build, start, migrate, seed)
+make fresh
 ```
+
+### Default Login Credentials
+
+After running `make fresh`, the following users are available:
+
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@example.com | password123 |
+| User | user@example.com | password123 |
+
+> **Note:** Change these credentials immediately in production environments.
 
 ### Verify Services
 
