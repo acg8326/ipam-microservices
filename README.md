@@ -120,6 +120,7 @@ See [Testing Guide](docs/testing.md) for detailed documentation.
 | Document | Description |
 |----------|-------------|
 | [Features Overview](docs/features.md) | Complete feature list, security model, endpoints |
+| [Security Guide](docs/security.md) | Authentication, authorization, rate limiting, CORS, audit logs |
 | [Frontend Guide](docs/frontend.md) | Vue.js SPA architecture, components, state management |
 | [Testing Guide](docs/testing.md) | PHPUnit and Vitest setup, running tests, writing tests |
 | [Docker Setup](docs/docker.md) | Container configuration, commands, troubleshooting |
