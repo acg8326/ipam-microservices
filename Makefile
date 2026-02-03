@@ -90,7 +90,8 @@ fresh: down
 	sleep 10
 	$(MAKE) migrate
 	$(MAKE) seed
-	docker compose exec auth-service php artisan passport:install --force
+	docker compose exec auth-service php artisan passport:keys --force
+	docker compose exec auth-service php artisan passport:client --personal --no-interaction
 	@echo ""
 	@echo "Fresh install complete!"
 	@echo ""
