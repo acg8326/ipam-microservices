@@ -127,7 +127,7 @@ services:
       IP_SERVICE_URL: http://ip-service
       CACHE_STORE: file
       SESSION_DRIVER: file
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
     volumes:
       - gateway-storage:/var/www/html/storage
     depends_on:

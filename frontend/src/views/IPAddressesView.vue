@@ -34,6 +34,12 @@ const formErrors = ref<Record<string, string>>({})
 
 const isAdmin = computed(() => authStore.user?.role === 'admin')
 
+// Can edit IP address field if admin OR owner of the IP
+const canEditIpField = computed(() => {
+  if (!selectedIP.value) return false
+  return isAdmin.value || Number(selectedIP.value.created_by) === Number(authStore.user?.id)
+})
+
 onMounted(() => {
   ipStore.fetchIPAddresses()
 })
@@ -125,12 +131,29 @@ async function updateIP() {
     formErrors.value.label = 'Label is required'
     return
   }
+
+  // Validate IP address if user is changing it
+  if (canEditIpField.value && form.value.ip_address !== selectedIP.value.ip_address) {
+    const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/
+    const ipv6Regex = /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::$|^([0-9a-fA-F]{1,4}:)*::([0-9a-fA-F]{1,4}:)*[0-9a-fA-F]{1,4}$/
+    if (!ipv4Regex.test(form.value.ip_address) && !ipv6Regex.test(form.value.ip_address)) {
+      formErrors.value.ip_address = 'Invalid IP address format'
+      return
+    }
+  }
   
   try {
-    await ipStore.updateIPAddress(selectedIP.value.id, {
+    const updateData: { label: string; comment: string | null; ip_address?: string } = {
       label: form.value.label,
       comment: form.value.comment || null
-    })
+    }
+
+    // Include IP address if user can edit and changed it
+    if (canEditIpField.value && form.value.ip_address !== selectedIP.value.ip_address) {
+      updateData.ip_address = form.value.ip_address
+    }
+
+    await ipStore.updateIPAddress(selectedIP.value.id, updateData)
     showEditModal.value = false
     toast.success('IP address updated successfully')
     ipStore.fetchIPAddresses()
@@ -407,12 +430,15 @@ function formatDate(dateString: string) {
           <div class="form-group">
             <label class="form-label">IP Address</label>
             <input
-              :value="form.ip_address"
+              v-model="form.ip_address"
               type="text"
               class="form-input"
-              disabled
+              :disabled="!canEditIpField"
+              :class="{ 'form-input--disabled': !canEditIpField }"
             >
-            <span class="form-hint">IP address cannot be changed</span>
+            <span v-if="formErrors.ip_address" class="form-error">{{ formErrors.ip_address }}</span>
+            <span v-else-if="!canEditIpField" class="form-hint">IP address cannot be changed (not owner)</span>
+            <span v-else class="form-hint form-hint--admin">You can modify the IP address</span>
           </div>
           <div class="form-group">
             <label class="form-label">Label *</label>
@@ -962,6 +988,17 @@ function formatDate(dateString: string) {
   font-size: 0.75rem;
   margin-top: 0.375rem;
   display: block;
+}
+
+.form-hint--admin {
+  color: #22c55e;
+  font-weight: 500;
+}
+
+.form-input--disabled {
+  background-color: #f1f5f9;
+  cursor: not-allowed;
+  color: #64748b;
 }
 
 .delete-info {

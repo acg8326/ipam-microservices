@@ -83,6 +83,15 @@ class IpAddressService
         if (array_key_exists('comment', $data)) {
             $updateData['comment'] = $data['comment'];
         }
+
+        // Allow IP address change for admins OR for owners editing their own
+        if (array_key_exists('ip_address', $data)) {
+            $isAdmin = $user['role'] === 'admin';
+            $isOwner = $ipAddress->created_by === (int) $user['id'];
+            if ($isAdmin || $isOwner) {
+                $updateData['ip_address'] = $data['ip_address'];
+            }
+        }
         
         $ipAddress->update($updateData);
 
@@ -127,7 +136,7 @@ class IpAddressService
 
     public function canUserModify(array $user, IpAddress $ipAddress): bool
     {
-        return $user['role'] === 'admin' || $ipAddress->created_by === $user['id'];
+        return $user['role'] === 'admin' || $ipAddress->created_by === (int) $user['id'];
     }
 
     public function canUserDelete(array $user): bool
