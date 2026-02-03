@@ -16,6 +16,18 @@ Route::middleware('throttle:60,1')->group(function () {
     Route::get('/auth/audit-logs', [GatewayController::class, 'authAuditLogIndex']);
     Route::get('/auth/audit-logs/verify', [GatewayController::class, 'authAuditLogVerify']);
 
+    // Dashboard
+    Route::get('/dashboard/stats', [GatewayController::class, 'dashboardStats']);
+
+    // Subnet routes
+    Route::get('/subnets', [GatewayController::class, 'subnetIndex']);
+    Route::post('/subnets', [GatewayController::class, 'subnetStore']);
+    Route::get('/subnets/tree', [GatewayController::class, 'subnetTree']);
+    Route::get('/subnets/{id}', [GatewayController::class, 'subnetShow']);
+    Route::put('/subnets/{id}', [GatewayController::class, 'subnetUpdate']);
+    Route::delete('/subnets/{id}', [GatewayController::class, 'subnetDestroy']);
+    Route::get('/subnets/{id}/ip-addresses', [GatewayController::class, 'subnetIpAddresses']);
+
     // IP Address routes
     Route::get('/ip-addresses', [GatewayController::class, 'ipAddressIndex']);
     Route::post('/ip-addresses', [GatewayController::class, 'ipAddressStore']);
