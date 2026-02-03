@@ -6,11 +6,11 @@ export const authApi = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     if (USE_MOCK_API) {
       const response = await mockApi.login(credentials.email, credentials.password)
-      apiClient.setToken(response.access_token)
+      apiClient.setToken(response.access_token, response.expires_in)
       return response
     }
     const response = await apiClient.post<AuthResponse>('/auth/login', credentials)
-    apiClient.setToken(response.access_token)
+    apiClient.setToken(response.access_token, response.expires_in)
     return response
   },
 
@@ -33,7 +33,7 @@ export const authApi = {
 
   async refreshToken(): Promise<AuthResponse> {
     const response = await apiClient.post<AuthResponse>('/auth/refresh')
-    apiClient.setToken(response.access_token)
+    apiClient.setToken(response.access_token, response.expires_in)
     return response
   },
 
