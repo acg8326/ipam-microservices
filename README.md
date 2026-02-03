@@ -57,10 +57,41 @@ Before you begin, ensure you have the following installed:
 | **Docker Compose** | v2+ | Included with Docker Desktop |
 | **Git** | 2.0+ | For cloning the repository |
 
-### Windows Users
+### For Running Tests (Optional)
+
+| Requirement | Version | Notes |
+|-------------|---------|-------|
+| **PHP** | 8.2+ | Required for backend tests |
+| **Composer** | 2.0+ | PHP dependency manager |
+| **Node.js** | 18+ | Required for frontend tests |
+| **npm** | 9+ | Comes with Node.js |
+
+### Windows Users (WSL 2 Recommended)
 - Install [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)
 - Enable WSL 2 backend (recommended) or Hyper-V
 - Ensure Docker Desktop is running before executing commands
+
+**For running tests in WSL**, install dependencies inside WSL (not Windows):
+```bash
+# Install Node.js in WSL
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Install PHP and Composer in WSL
+sudo apt-get install -y php8.2 php8.2-cli php8.2-mbstring php8.2-xml php8.2-curl php8.2-sqlite3
+curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/composer
+
+# Install backend dependencies
+cd services/auth-service && composer install
+cd ../ip-service && composer install
+cd ../gateway && composer install
+
+# Install frontend dependencies
+cd ../../frontend && npm install
+```
+
+> ⚠️ **Important:** Do NOT use Windows Node.js/PHP from WSL. Install them inside WSL to avoid path issues.
 
 ### Linux Users
 - Install Docker Engine and Docker Compose plugin
@@ -225,6 +256,8 @@ make test-fe
 # Backend only  
 make test-be
 ```
+
+> **WSL Users:** If you get `'vitest' is not recognized` or `UNC paths are not supported` errors, you need to install Node.js and PHP **inside WSL**, not use Windows versions. See [Prerequisites](#for-running-tests-optional) for setup instructions.
 
 See [Testing Guide](docs/testing.md) for detailed documentation.
 

@@ -4,6 +4,95 @@
 
 The IPAM project includes both frontend (Vitest) and backend (PHPUnit) tests to ensure code quality and reliability.
 
+## Prerequisites
+
+Tests run **locally** (not inside Docker) because production containers don't include dev dependencies.
+
+### Backend Tests Requirements
+
+| Requirement | Version | Check Command |
+|-------------|---------|---------------|
+| PHP | 8.2+ | `php -v` |
+| PHP Extensions | mbstring, xml, curl, sqlite3, tokenizer, openssl | `php -m` |
+| Composer | 2.0+ | `composer -V` |
+
+### Frontend Tests Requirements
+
+| Requirement | Version | Check Command |
+|-------------|---------|---------------|
+| Node.js | 18+ | `node -v` |
+| npm | 9+ | `npm -v` |
+
+### Installation by Platform
+
+<details>
+<summary><strong>Ubuntu / Debian / WSL</strong></summary>
+
+```bash
+# Update package list
+sudo apt-get update
+
+# Install PHP and required extensions
+sudo apt-get install -y php8.2 php8.2-cli php8.2-mbstring php8.2-xml \
+    php8.2-curl php8.2-sqlite3 php8.2-tokenizer php8.2-openssl unzip
+
+# Install Composer
+curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/composer
+
+# Install Node.js 20.x
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Install project dependencies
+cd /path/to/ipam-microservices
+cd services/auth-service && composer install
+cd ../ip-service && composer install
+cd ../gateway && composer install
+cd ../../frontend && npm install
+```
+
+</details>
+
+<details>
+<summary><strong>macOS (Homebrew)</strong></summary>
+
+```bash
+# Install PHP
+brew install php@8.2
+
+# Install Composer
+brew install composer
+
+# Install Node.js
+brew install node@20
+
+# Install project dependencies
+cd /path/to/ipam-microservices
+cd services/auth-service && composer install
+cd ../ip-service && composer install
+cd ../gateway && composer install
+cd ../../frontend && npm install
+```
+
+</details>
+
+<details>
+<summary><strong>Windows (Native - Not Recommended)</strong></summary>
+
+> ⚠️ **Recommendation:** Use WSL 2 instead. Native Windows has path issues with some npm packages.
+
+1. Install [PHP for Windows](https://windows.php.net/download/) (VS16 x64 Non Thread Safe)
+2. Install [Composer](https://getcomposer.org/Composer-Setup.exe)
+3. Install [Node.js](https://nodejs.org/) (LTS version)
+4. Add PHP to your PATH environment variable
+5. Run `composer install` in each service directory
+6. Run `npm install` in the frontend directory
+
+</details>
+
+---
+
 ## Quick Reference
 
 ```bash
@@ -29,7 +118,34 @@ cd services/ip-service && php artisan test
 cd services/gateway && php artisan test
 ```
 
-> **Note:** Backend tests run locally (not in Docker containers) because the production containers are built without dev dependencies for smaller image sizes.
+## Troubleshooting
+
+### WSL: `'vitest' is not recognized` or `UNC paths are not supported`
+
+**Cause:** You're using Windows Node.js from WSL instead of Linux Node.js.
+
+**Fix:** Install Node.js inside WSL:
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
+
+### `Class 'PDO' not found` or `driver not found`
+
+**Cause:** Missing PHP SQLite extension (tests use SQLite in-memory database).
+
+**Fix:**
+```bash
+sudo apt-get install php8.2-sqlite3
+```
+
+### `composer: command not found`
+
+**Fix:**
+```bash
+curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/composer
+```
 
 ---
 
