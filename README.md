@@ -90,16 +90,11 @@ cp .env.example .env
 # Build and start containers
 docker compose up -d --build
 
-# Wait for services to initialize (about 10-15 seconds)
-# Then run migrations
-docker compose exec auth-service php artisan migrate --force
-docker compose exec ip-service php artisan migrate --force
+# Wait for services to initialize (about 15-20 seconds)
+# The entrypoint automatically runs migrations and sets up Passport
 
 # Seed default users
 docker compose exec auth-service php artisan db:seed --force
-
-# Install Passport keys
-docker compose exec auth-service php artisan passport:install --force
 ```
 
 > **Windows Users:** Use `copy .env.example .env` instead of `cp`

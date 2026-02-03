@@ -86,12 +86,10 @@ fresh: down
 	docker compose down -v
 	docker compose build --no-cache
 	docker compose up -d
-	@echo "Waiting for services to start..."
-	sleep 10
-	$(MAKE) migrate
+	@echo "Waiting for services to initialize..."
+	sleep 15
+	@echo "Seeding database..."
 	$(MAKE) seed
-	docker compose exec auth-service php artisan passport:keys --force
-	docker compose exec auth-service php artisan passport:client --personal --no-interaction
 	@echo ""
 	@echo "Fresh install complete!"
 	@echo ""
