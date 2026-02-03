@@ -12,8 +12,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Ignore Passport's default migrations - we have our own
-        Passport::ignoreMigrations();
+        //
     }
 
     /**
