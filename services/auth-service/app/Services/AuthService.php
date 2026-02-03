@@ -12,7 +12,7 @@ class AuthService
 {
     private const TOKEN_EXPIRATION_SECONDS = 3600;
 
-    public function register(array $data, ?string $ipAddress = null): array
+    public function register(array $data, ?string $ipAddress = null, ?User $createdBy = null): array
     {
         $user = User::create([
             'name' => $data['name'],
@@ -21,21 +21,19 @@ class AuthService
             'role' => $data['role'] ?? 'user',
         ]);
 
-        $sessionId = $this->generateSessionId();
-
         AuditLog::log(
-            'register',
+            'user_created',
             'user',
             $user->id,
             null,
             ['name' => $user->name, 'email' => $user->email, 'role' => $user->role],
-            $user->id,
-            $user->email,
-            $sessionId,
+            $createdBy?->id,
+            $createdBy?->email ?? 'system',
+            null,
             $ipAddress
         );
 
-        return $this->createTokenResponse($user, $sessionId);
+        return ['user' => $user];
     }
 
     public function login(array $credentials, ?string $ipAddress = null): array

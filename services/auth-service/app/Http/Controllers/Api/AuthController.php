@@ -19,7 +19,8 @@ class AuthController extends Controller
     {
         $result = $this->authService->register(
             $request->validated(),
-            $request->ip()
+            $request->ip(),
+            $request->user() // The admin creating the user
         );
 
         return response()->json($result, 201);
