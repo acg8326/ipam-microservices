@@ -118,6 +118,13 @@ class AuthService
         return User::all();
     }
 
+    public function getUserNames(array $userIds): array
+    {
+        return User::whereIn('id', $userIds)
+            ->pluck('name', 'id')
+            ->toArray();
+    }
+
     private function createTokenResponse(User $user, ?string $auditSessionId = null): array
     {
         $tokenResult = $user->createToken('auth_token', [$user->role]);

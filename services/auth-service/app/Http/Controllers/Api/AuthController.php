@@ -75,4 +75,18 @@ class AuthController extends Controller
 
         return response()->json($users);
     }
+
+    public function userNames(Request $request): JsonResponse
+    {
+        $ids = $request->query('ids');
+        
+        if (empty($ids)) {
+            return response()->json(['users' => []]);
+        }
+
+        $userIds = array_map('intval', explode(',', $ids));
+        $users = $this->authService->getUserNames($userIds);
+
+        return response()->json(['users' => $users]);
+    }
 }
