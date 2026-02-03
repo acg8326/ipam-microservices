@@ -67,6 +67,12 @@ class AuditLog extends Model
 
     private static function generateHash(array $data, ?string $previousHash): string
     {
+        // Normalize created_at to a consistent format
+        $createdAt = $data['created_at'];
+        if ($createdAt instanceof \Carbon\Carbon || $createdAt instanceof \DateTimeInterface) {
+            $createdAt = $createdAt->format('Y-m-d H:i:s');
+        }
+
         $content = json_encode([
             'action' => $data['action'],
             'entity_type' => $data['entity_type'],
@@ -77,7 +83,7 @@ class AuditLog extends Model
             'user_email' => $data['user_email'],
             'session_id' => $data['session_id'],
             'ip_address' => $data['ip_address'],
-            'created_at' => $data['created_at']->toISOString(),
+            'created_at' => $createdAt,
             'previous_hash' => $previousHash,
         ]);
 

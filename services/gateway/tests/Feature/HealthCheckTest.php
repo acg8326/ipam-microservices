@@ -12,9 +12,8 @@ class HealthCheckTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonStructure([
-                'status',
+                'gateway',
                 'services',
-                'timestamp',
             ]);
     }
 

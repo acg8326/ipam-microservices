@@ -15,19 +15,6 @@ class IpAddressTest extends TestCase
         parent::setUp();
     }
 
-    /**
-     * Helper to simulate authenticated request with user headers
-     */
-    protected function withAuthHeaders(int $userId = 1, string $role = 'user', string $email = 'test@example.com'): self
-    {
-        return $this->withHeaders([
-            'X-User-Id' => $userId,
-            'X-User-Role' => $role,
-            'X-User-Email' => $email,
-            'X-Session-Id' => 'test-session-123',
-        ]);
-    }
-
     public function test_user_can_list_all_ip_addresses(): void
     {
         IpAddress::factory()->count(5)->create();
@@ -54,9 +41,11 @@ class IpAddressTest extends TestCase
 
         $response->assertStatus(201)
             ->assertJson([
-                'ip_address' => '192.168.1.100',
-                'label' => 'Test Server',
-                'comment' => 'A test comment',
+                'data' => [
+                    'ip_address' => '192.168.1.100',
+                    'label' => 'Test Server',
+                    'comment' => 'A test comment',
+                ],
             ]);
 
         $this->assertDatabaseHas('ip_addresses', [
@@ -75,7 +64,9 @@ class IpAddressTest extends TestCase
 
         $response->assertStatus(201)
             ->assertJson([
-                'ip_address' => '2001:0db8:85a3:0000:0000:8a2e:0370:7334',
+                'data' => [
+                    'ip_address' => '2001:0db8:85a3:0000:0000:8a2e:0370:7334',
+                ],
             ]);
     }
 
@@ -135,8 +126,10 @@ class IpAddressTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJson([
-                'label' => 'New Label',
-                'comment' => 'Updated comment',
+                'data' => [
+                    'label' => 'New Label',
+                    'comment' => 'Updated comment',
+                ],
             ]);
     }
 
@@ -168,7 +161,7 @@ class IpAddressTest extends TestCase
             ]);
 
         $response->assertStatus(200)
-            ->assertJson(['label' => 'Admin Updated']);
+            ->assertJson(['data' => ['label' => 'Admin Updated']]);
     }
 
     public function test_user_cannot_delete_ip_address(): void

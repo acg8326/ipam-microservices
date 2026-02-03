@@ -116,14 +116,18 @@ curl http://localhost:8000/api/health
 
 ### Common Commands
 
-| Task | Make | Docker Compose |
-|------|------|----------------|
+| Task | Make | Docker Compose / Manual |
+|------|------|-------------------------|
 | Start services | `make up` | `docker compose up -d` |
 | Stop services | `make down` | `docker compose down` |
 | View logs | `make logs` | `docker compose logs -f` |
 | Run migrations | `make migrate` | `docker compose exec auth-service php artisan migrate --force` |
 | Seed database | `make seed` | `docker compose exec auth-service php artisan db:seed --force` |
-| Run tests | `make test-be` | `docker compose exec auth-service php artisan test` |
+| Run all tests | `make test` | See below |
+| Backend tests | `make test-be` | `cd services/auth-service && php artisan test` |
+| Frontend tests | `make test-fe` | `cd frontend && npm run test:run` |
+
+> **Note:** Backend tests run locally (requires PHP 8.2+ and Composer installed) because production Docker containers are built without dev dependencies.
 
 See [Docker Documentation](docs/docker.md) for detailed setup, commands, and troubleshooting.
 

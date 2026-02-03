@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Passport\Passport;
 use Tests\TestCase;
 
 class UserManagementTest extends TestCase
@@ -15,8 +16,9 @@ class UserManagementTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         User::factory()->count(3)->create(['role' => 'user']);
 
-        $response = $this->actingAs($admin, 'api')
-            ->getJson('/api/users');
+        Passport::actingAs($admin, ['admin']);
+
+        $response = $this->getJson('/api/users');
 
         $response->assertStatus(200)
             ->assertJsonCount(4); // 3 users + 1 admin
@@ -26,8 +28,9 @@ class UserManagementTest extends TestCase
     {
         $user = User::factory()->create(['role' => 'user']);
 
-        $response = $this->actingAs($user, 'api')
-            ->getJson('/api/users');
+        Passport::actingAs($user, ['user']);
+
+        $response = $this->getJson('/api/users');
 
         $response->assertStatus(403);
     }
@@ -36,17 +39,18 @@ class UserManagementTest extends TestCase
     {
         $admin = User::factory()->create(['role' => 'admin']);
 
-        $response = $this->actingAs($admin, 'api')
-            ->postJson('/api/users', [
-                'name' => 'New User',
-                'email' => 'newuser@example.com',
-                'password' => 'password123',
-                'password_confirmation' => 'password123',
-                'role' => 'user',
-            ]);
+        Passport::actingAs($admin, ['admin']);
+
+        $response = $this->postJson('/api/register', [
+            'name' => 'New User',
+            'email' => 'newuser@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'role' => 'user',
+        ]);
 
         $response->assertStatus(201)
-            ->assertJsonStructure(['id', 'name', 'email', 'role']);
+            ->assertJsonStructure(['user' => ['id', 'name', 'email', 'role']]);
 
         $this->assertDatabaseHas('users', [
             'email' => 'newuser@example.com',
@@ -58,14 +62,15 @@ class UserManagementTest extends TestCase
     {
         $user = User::factory()->create(['role' => 'user']);
 
-        $response = $this->actingAs($user, 'api')
-            ->postJson('/api/users', [
-                'name' => 'New User',
-                'email' => 'newuser@example.com',
-                'password' => 'password123',
-                'password_confirmation' => 'password123',
-                'role' => 'user',
-            ]);
+        Passport::actingAs($user, ['user']);
+
+        $response = $this->postJson('/api/register', [
+            'name' => 'New User',
+            'email' => 'newuser@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'role' => 'user',
+        ]);
 
         $response->assertStatus(403);
     }

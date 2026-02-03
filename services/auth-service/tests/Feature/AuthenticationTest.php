@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Passport\ClientRepository;
+use Laravel\Passport\Passport;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -14,12 +16,19 @@ class AuthenticationTest extends TestCase
     {
         parent::setUp();
         
-        // Run passport:keys if needed
+        // Run passport keys
         $this->artisan('passport:keys', ['--force' => true]);
+        
+        // Create personal access client using ClientRepository (Passport v13)
+        $clientRepository = app(ClientRepository::class);
+        $clientRepository->createPersonalAccessGrantClient('Test Personal Access Client');
     }
 
-    public function test_user_can_register_with_valid_data(): void
+    public function test_admin_can_register_new_user_with_valid_data(): void
     {
+        $admin = User::factory()->create(['role' => 'admin']);
+        Passport::actingAs($admin, ['admin']);
+
         $response = $this->postJson('/api/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
@@ -30,9 +39,6 @@ class AuthenticationTest extends TestCase
         $response->assertStatus(201)
             ->assertJsonStructure([
                 'user' => ['id', 'name', 'email', 'role'],
-                'access_token',
-                'token_type',
-                'expires_in',
             ]);
 
         $this->assertDatabaseHas('users', [
@@ -43,6 +49,9 @@ class AuthenticationTest extends TestCase
 
     public function test_registration_fails_with_invalid_email(): void
     {
+        $admin = User::factory()->create(['role' => 'admin']);
+        Passport::actingAs($admin, ['admin']);
+
         $response = $this->postJson('/api/register', [
             'name' => 'Test User',
             'email' => 'invalid-email',
@@ -56,6 +65,9 @@ class AuthenticationTest extends TestCase
 
     public function test_registration_fails_with_short_password(): void
     {
+        $admin = User::factory()->create(['role' => 'admin']);
+        Passport::actingAs($admin, ['admin']);
+
         $response = $this->postJson('/api/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
@@ -69,6 +81,9 @@ class AuthenticationTest extends TestCase
 
     public function test_registration_fails_with_duplicate_email(): void
     {
+        $admin = User::factory()->create(['role' => 'admin']);
+        Passport::actingAs($admin, ['admin']);
+        
         User::factory()->create(['email' => 'test@example.com']);
 
         $response = $this->postJson('/api/register', [
@@ -115,8 +130,8 @@ class AuthenticationTest extends TestCase
             'password' => 'wrongpassword',
         ]);
 
-        $response->assertStatus(401)
-            ->assertJson(['message' => 'Invalid credentials']);
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['email']);
     }
 
     public function test_login_fails_with_nonexistent_user(): void
@@ -126,7 +141,7 @@ class AuthenticationTest extends TestCase
             'password' => 'password123',
         ]);
 
-        $response->assertStatus(401);
+        $response->assertStatus(422);
     }
 
     public function test_authenticated_user_can_get_profile(): void

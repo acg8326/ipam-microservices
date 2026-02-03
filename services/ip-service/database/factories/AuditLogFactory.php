@@ -12,7 +12,7 @@ class AuditLogFactory extends Factory
     public function definition(): array
     {
         return [
-            'action' => $this->faker->randomElement(['create', 'update', 'delete']),
+            'action' => $this->faker->randomElement(['created', 'updated', 'deleted']),
             'entity_type' => 'ip_address',
             'entity_id' => $this->faker->numberBetween(1, 100),
             'old_values' => null,
@@ -22,6 +22,7 @@ class AuditLogFactory extends Factory
             'session_id' => $this->faker->uuid(),
             'ip_address' => $this->faker->ipv4(),
             'hash' => $this->faker->sha256(),
+            'created_at' => now(),
         ];
     }
 }

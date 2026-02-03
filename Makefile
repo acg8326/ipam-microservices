@@ -100,14 +100,14 @@ fresh: down
 # Run all tests
 test: test-be test-fe
 
-# Run backend tests
+# Run backend tests (locally - requires PHP and composer)
 test-be:
 	@echo "Running Auth Service tests..."
-	docker compose exec auth-service php artisan test
+	cd services/auth-service && php artisan test
 	@echo "Running IP Service tests..."
-	docker compose exec ip-service php artisan test
+	cd services/ip-service && php artisan test
 	@echo "Running Gateway tests..."
-	docker compose exec gateway php artisan test
+	cd services/gateway && php artisan test
 
 # Run frontend tests
 test-fe:

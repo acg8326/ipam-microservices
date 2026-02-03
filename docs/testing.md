@@ -7,17 +7,29 @@ The IPAM project includes both frontend (Vitest) and backend (PHPUnit) tests to 
 ## Quick Reference
 
 ```bash
+# Run all tests (backend + frontend)
+make test
+
+# Backend tests only
+make test-be
+
+# Frontend tests only
+make test-fe
+```
+
+### Running Tests Individually
+
+```bash
 # Frontend tests
 cd frontend && npm run test:run
 
-# Backend tests (requires running containers)
-docker exec ipam-auth-service php artisan test
-docker exec ipam-ip-service php artisan test
-docker exec ipam-gateway php artisan test
-
-# Run all backend tests
-make test
+# Backend tests (run locally - requires PHP 8.2+ and Composer)
+cd services/auth-service && php artisan test
+cd services/ip-service && php artisan test
+cd services/gateway && php artisan test
 ```
+
+> **Note:** Backend tests run locally (not in Docker containers) because the production containers are built without dev dependencies for smaller image sizes.
 
 ---
 
@@ -102,26 +114,26 @@ Laravel includes PHPUnit out of the box. Each service has its own test suite.
 
 ### Running Tests
 
-Tests must run inside Docker containers where the Laravel app is configured:
+Tests run locally using PHP and Composer (not inside Docker containers):
 
 ```bash
 # Auth Service
-docker exec ipam-auth-service php artisan test
+cd services/auth-service && php artisan test
 
 # IP Service
-docker exec ipam-ip-service php artisan test
+cd services/ip-service && php artisan test
 
 # Gateway
-docker exec ipam-gateway php artisan test
+cd services/gateway && php artisan test
 
 # With verbose output
-docker exec ipam-auth-service php artisan test --verbose
+cd services/auth-service && php artisan test --verbose
 
 # Run specific test class
-docker exec ipam-auth-service php artisan test --filter=AuthenticationTest
+cd services/auth-service && php artisan test --filter=AuthenticationTest
 
 # Run specific test method
-docker exec ipam-auth-service php artisan test --filter=test_user_can_login
+cd services/auth-service && php artisan test --filter=test_user_can_login
 ```
 
 ### Test Files
@@ -130,23 +142,47 @@ docker exec ipam-auth-service php artisan test --filter=test_user_can_login
 
 | File | Tests | Description |
 |------|-------|-------------|
-| `Feature/AuthenticationTest.php` | 9 | Login, logout, token validation |
+| `Feature/AuthenticationTest.php` | 9 | Login, logout, registration, token validation |
 | `Feature/UserManagementTest.php` | 5 | User CRUD by admin |
+| `Unit/ExampleTest.php` | 1 | Basic unit test |
+| `Feature/ExampleTest.php` | 1 | Basic feature test |
 
 #### IP Service (`services/ip-service/tests/`)
 
 | File | Tests | Description |
 |------|-------|-------------|
-| `Feature/IpAddressTest.php` | 14 | IP CRUD operations |
-| `Feature/AuditLogTest.php` | 9 | Audit log viewing |
+| `Feature/IpAddressTest.php` | 13 | IP CRUD operations, permissions |
+| `Feature/AuditLogTest.php` | 9 | Audit log creation, viewing, verification |
+| `Unit/ExampleTest.php` | 1 | Basic unit test |
+| `Feature/ExampleTest.php` | 1 | Basic feature test |
 
 #### Gateway (`services/gateway/tests/`)
 
 | File | Tests | Description |
 |------|-------|-------------|
 | `Feature/HealthCheckTest.php` | 2 | Health endpoint |
+| `Unit/ExampleTest.php` | 1 | Basic unit test |
+| `Feature/ExampleTest.php` | 1 | Basic feature test |
 
-**Total: 39 tests**
+**Total Backend: 44 tests**
+
+### Test Authentication Helpers
+
+The IP Service tests use custom authentication helpers that mock the `ValidateToken` middleware:
+
+```php
+// In your test class (extends Tests\TestCase)
+public function test_example(): void
+{
+    // Authenticate as regular user
+    $response = $this->withAuthHeaders(userId: 1, role: 'user')
+        ->getJson('/api/ip-addresses');
+
+    // Authenticate as admin
+    $response = $this->withAdminHeaders()
+        ->deleteJson('/api/ip-addresses/1');
+}
+```
 
 ### Writing New Tests
 
@@ -160,6 +196,7 @@ namespace Tests\Feature;
 
 use Tests\TestCase;
 use App\Models\User;
+use Laravel\Passport\Passport;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class ExampleTest extends TestCase
@@ -168,10 +205,10 @@ class ExampleTest extends TestCase
 
     public function test_example_endpoint_returns_success(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'admin']);
+        Passport::actingAs($user, ['admin']);
 
-        $response = $this->actingAs($user, 'api')
-            ->getJson('/api/example');
+        $response = $this->getJson('/api/example');
 
         $response->assertStatus(200)
             ->assertJsonStructure(['data']);
