@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { apiClient, USE_MOCK_API, mockApi } from '@/api'
+import { useAuthStore } from '@/stores'
 import type { DashboardStats } from '@/types'
 
+const authStore = useAuthStore()
 const stats = ref<DashboardStats | null>(null)
 const loading = ref(true)
 const error = ref('')
@@ -21,17 +23,37 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+function formatDate(dateString: string) {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+function getActionBadgeClass(action: string) {
+  switch (action) {
+    case 'create': return 'badge--green'
+    case 'update': return 'badge--yellow'
+    case 'delete': return 'badge--red'
+    default: return 'badge--blue'
+  }
+}
 </script>
 
 <template>
   <div class="dashboard">
     <header class="dashboard__header">
       <h1 class="dashboard__title">Dashboard</h1>
-      <p class="dashboard__subtitle">IP Address Management Overview</p>
+      <p class="dashboard__subtitle">Welcome back, {{ authStore.user?.name }}</p>
     </header>
 
     <div v-if="loading" class="dashboard__loading">
-      Loading dashboard...
+      <div class="spinner"></div>
+      <p>Loading dashboard...</p>
     </div>
 
     <div v-else-if="error" class="dashboard__error">
@@ -42,99 +64,55 @@ onMounted(async () => {
       <!-- Stats Cards -->
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-card__icon stat-card__icon--blue">S</div>
-          <div class="stat-card__content">
-            <div class="stat-card__value">{{ stats?.total_subnets || 0 }}</div>
-            <div class="stat-card__label">Total Subnets</div>
-          </div>
-        </div>
-
-        <div class="stat-card">
           <div class="stat-card__icon stat-card__icon--green">IP</div>
           <div class="stat-card__content">
             <div class="stat-card__value">{{ stats?.total_ips || 0 }}</div>
-            <div class="stat-card__label">Total IPs</div>
+            <div class="stat-card__label">Total IP Addresses</div>
           </div>
         </div>
 
         <div class="stat-card">
-          <div class="stat-card__icon stat-card__icon--yellow">A</div>
+          <div class="stat-card__icon stat-card__icon--blue">My</div>
           <div class="stat-card__content">
-            <div class="stat-card__value">{{ stats?.assigned_ips || 0 }}</div>
-            <div class="stat-card__label">Assigned IPs</div>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-card__icon stat-card__icon--purple">%</div>
-          <div class="stat-card__content">
-            <div class="stat-card__value">{{ stats?.utilization_percent || 0 }}%</div>
-            <div class="stat-card__label">Utilization</div>
+            <div class="stat-card__value">{{ stats?.my_ips || 0 }}</div>
+            <div class="stat-card__label">My IP Addresses</div>
           </div>
         </div>
       </div>
 
-      <!-- Main Content Grid -->
-      <div class="dashboard__grid">
-        <!-- Recent Assignments -->
-        <div class="card">
-          <h2 class="card__title">Recent Assignments</h2>
-          <div class="card__content">
-            <div v-if="!stats?.recent_assignments?.length" class="card__empty">
-              No recent assignments
-            </div>
-            <table v-else class="table">
-              <thead>
-                <tr>
-                  <th>IP Address</th>
-                  <th>Hostname</th>
-                  <th>Assigned To</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="ip in stats?.recent_assignments" :key="ip.id">
-                  <td>
-                    <code>{{ ip.ip_address }}</code>
-                  </td>
-                  <td>{{ ip.hostname || '-' }}</td>
-                  <td>{{ ip.assigned_to || '-' }}</td>
-                </tr>
-              </tbody>
-            </table>
+      <!-- Recent Activity -->
+      <div class="card">
+        <h2 class="card__title">Recent Activity</h2>
+        <div class="card__content">
+          <div v-if="!stats?.recent_activity?.length" class="card__empty">
+            No recent activity
           </div>
-        </div>
-
-        <!-- Subnet Utilization -->
-        <div class="card">
-          <h2 class="card__title">Subnet Utilization</h2>
-          <div class="card__content">
-            <div v-if="!stats?.subnet_utilization?.length" class="card__empty">
-              No subnets configured
-            </div>
-            <div v-else class="utilization-list">
-              <div
-                v-for="subnet in stats?.subnet_utilization"
-                :key="subnet.subnet_id"
-                class="utilization-item"
-              >
-                <div class="utilization-item__header">
-                  <span class="utilization-item__name">{{ subnet.subnet_name }}</span>
-                  <span class="utilization-item__percent">{{ subnet.utilization_percent }}%</span>
-                </div>
-                <div class="utilization-item__bar">
-                  <div
-                    class="utilization-item__fill"
-                    :style="{ width: `${subnet.utilization_percent}%` }"
-                    :class="{
-                      'utilization-item__fill--warning': subnet.utilization_percent > 70,
-                      'utilization-item__fill--danger': subnet.utilization_percent > 90,
-                    }"
-                  ></div>
-                </div>
-                <div class="utilization-item__network">{{ subnet.network }}</div>
-              </div>
-            </div>
-          </div>
+          <table v-else class="table">
+            <thead>
+              <tr>
+                <th>Action</th>
+                <th>IP Address</th>
+                <th>Label</th>
+                <th>User</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="activity in stats?.recent_activity" :key="activity.id">
+                <td>
+                  <span class="badge" :class="getActionBadgeClass(activity.action)">
+                    {{ activity.action }}
+                  </span>
+                </td>
+                <td>
+                  <code class="ip-code">{{ activity.ip_address }}</code>
+                </td>
+                <td>{{ activity.label }}</td>
+                <td>{{ activity.user_name }}</td>
+                <td class="date">{{ formatDate(activity.created_at) }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </template>
@@ -294,53 +272,30 @@ onMounted(async () => {
   font-size: 0.875rem;
 }
 
-.utilization-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.utilization-item__header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-}
-
-.utilization-item__name {
-  font-weight: 500;
-  color: #1f2937;
-}
-
-.utilization-item__percent {
-  font-weight: 600;
-  color: #4b5563;
-}
-
-.utilization-item__bar {
-  height: 8px;
-  background-color: #e5e7eb;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.utilization-item__fill {
-  height: 100%;
-  background-color: #4ade80;
-  border-radius: 4px;
-  transition: width 0.3s ease;
-}
-
-.utilization-item__fill--warning {
-  background-color: #fbbf24;
-}
-
-.utilization-item__fill--danger {
-  background-color: #ef4444;
-}
-
-.utilization-item__network {
+.badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
   font-size: 0.75rem;
-  color: #9ca3af;
-  margin-top: 0.25rem;
+  font-weight: 500;
+}
+
+.badge--green {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.badge--yellow {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.badge--red {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.badge--blue {
+  background-color: #dbeafe;
+  color: #1e40af;
 }
 </style>
