@@ -18,8 +18,6 @@ export const useIPAddressesStore = defineStore('ipAddresses', () => {
   async function fetchIPAddresses(params?: {
     page?: number
     per_page?: number
-    subnet_id?: number
-    status?: string
     search?: string
   }) {
     loading.value = true
@@ -103,7 +101,7 @@ export const useIPAddressesStore = defineStore('ipAddresses', () => {
     
     try {
       await ipAddressesApi.delete(id)
-      ipAddresses.value = ipAddresses.value.filter(i => i.id !== id)
+      ipAddresses.value = ipAddresses.value.filter(ip => ip.id !== id)
       if (currentIP.value?.id === id) {
         currentIP.value = null
       }
@@ -116,63 +114,8 @@ export const useIPAddressesStore = defineStore('ipAddresses', () => {
     }
   }
 
-  async function assignIP(id: number, data: {
-    hostname?: string
-    mac_address?: string
-    assigned_to?: string
-    device_type?: string
-    description?: string
-  }) {
-    loading.value = true
+  function clearError() {
     error.value = null
-    
-    try {
-      const ip = await ipAddressesApi.assign(id, data)
-      const index = ipAddresses.value.findIndex(i => i.id === id)
-      if (index !== -1) {
-        ipAddresses.value[index] = ip
-      }
-      return ip
-    } catch (e: unknown) {
-      const err = e as { message?: string }
-      error.value = err.message || 'Failed to assign IP address'
-      throw e
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function releaseIP(id: number) {
-    loading.value = true
-    error.value = null
-    
-    try {
-      const ip = await ipAddressesApi.release(id)
-      const index = ipAddresses.value.findIndex(i => i.id === id)
-      if (index !== -1) {
-        ipAddresses.value[index] = ip
-      }
-      return ip
-    } catch (e: unknown) {
-      const err = e as { message?: string }
-      error.value = err.message || 'Failed to release IP address'
-      throw e
-    } finally {
-      loading.value = false
-    }
-  }
-
-  function $reset() {
-    ipAddresses.value = []
-    currentIP.value = null
-    loading.value = false
-    error.value = null
-    pagination.value = {
-      currentPage: 1,
-      lastPage: 1,
-      perPage: 50,
-      total: 0,
-    }
   }
 
   return {
@@ -186,8 +129,6 @@ export const useIPAddressesStore = defineStore('ipAddresses', () => {
     createIPAddress,
     updateIPAddress,
     deleteIPAddress,
-    assignIP,
-    releaseIP,
-    $reset,
+    clearError,
   }
 })
