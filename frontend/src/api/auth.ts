@@ -37,15 +37,20 @@ export const authApi = {
     return response
   },
 
-  async register(data: {
+  // Admin-only: Create a new user
+  async createUser(data: {
     name: string
     email: string
     password: string
     password_confirmation: string
-  }): Promise<AuthResponse> {
-    const response = await apiClient.post<AuthResponse>('/auth/register', data)
-    apiClient.setToken(response.access_token)
-    return response
+    role: 'admin' | 'user'
+  }): Promise<{ user: User }> {
+    return apiClient.post<{ user: User }>('/auth/register', data)
+  },
+
+  // Admin-only: Get all users
+  async getUsers(): Promise<User[]> {
+    return apiClient.get<User[]>('/auth/users')
   },
 }
 

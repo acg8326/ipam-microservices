@@ -84,6 +84,10 @@ async function handleLogin() {
         >
           {{ loading ? 'Signing in...' : 'Sign In' }}
         </button>
+
+        <p class="login__help-text">
+          Contact your administrator if you need an account.
+        </p>
       </form>
     </div>
   </div>
@@ -185,5 +189,12 @@ async function handleLogin() {
 .login__button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.login__help-text {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.8125rem;
+  margin: 0.5rem 0 0;
 }
 </style>
