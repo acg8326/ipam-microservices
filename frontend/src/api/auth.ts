@@ -10,7 +10,7 @@ export const authApi = {
       return response
     }
     const response = await apiClient.post<AuthResponse>('/auth/login', credentials)
-    apiClient.setToken(response.access_token, response.expires_in)
+    apiClient.setToken(response.access_token, response.expires_in, response.session_id)
     return response
   },
 

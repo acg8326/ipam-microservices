@@ -14,6 +14,7 @@ interface AuditLog {
   session_id: string | null
   ip_address: string | null
   created_at: string
+  source?: 'ip' | 'auth' // Track which service the log came from
 }
 
 interface AuditLogsResponse {
@@ -33,6 +34,16 @@ const totalLogs = ref(0)
 // Filters
 const filterAction = ref('')
 const filterUser = ref('')
+const filterSession = ref('')
+const filterSource = ref<'all' | 'ip' | 'auth'>('all')
+
+// Get unique sessions for the dropdown
+const uniqueSessions = computed(() => {
+  const sessions = logs.value
+    .map(log => log.session_id)
+    .filter((session): session is string => !!session)
+  return [...new Set(sessions)]
+})
 
 const filteredLogs = computed(() => {
   let result = logs.value
@@ -44,6 +55,14 @@ const filteredLogs = computed(() => {
   if (filterUser.value) {
     result = result.filter(log => log.user_email.toLowerCase().includes(filterUser.value.toLowerCase()))
   }
+
+  if (filterSession.value) {
+    result = result.filter(log => log.session_id === filterSession.value)
+  }
+
+  if (filterSource.value !== 'all') {
+    result = result.filter(log => log.source === filterSource.value)
+  }
   
   return result
 })
@@ -53,11 +72,31 @@ async function loadLogs(page = 1) {
   error.value = ''
   
   try {
-    const response = await apiClient.get<AuditLogsResponse>(`/audit-logs?page=${page}`)
-    logs.value = response.data
-    currentPage.value = response.current_page
-    totalPages.value = response.last_page
-    totalLogs.value = response.total
+    // Fetch from both IP service and Auth service audit logs
+    const [ipResponse, authResponse] = await Promise.all([
+      apiClient.get<AuditLogsResponse>(`/audit-logs?page=${page}`).catch(() => null),
+      apiClient.get<AuditLogsResponse>(`/auth/audit-logs?page=${page}`).catch(() => null)
+    ])
+    
+    // Combine logs from both services
+    const ipLogs = (ipResponse?.data || []).map(log => ({ ...log, source: 'ip' as const }))
+    const authLogs = (authResponse?.data || []).map(log => ({ ...log, source: 'auth' as const }))
+    
+    // Merge and sort by created_at (newest first)
+    const allLogs = [...ipLogs, ...authLogs].sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )
+    
+    logs.value = allLogs
+    
+    // Calculate totals from both responses
+    const ipTotal = ipResponse?.total || 0
+    const authTotal = authResponse?.total || 0
+    totalLogs.value = ipTotal + authTotal
+    
+    // Use the max of both for pagination (simplified approach)
+    currentPage.value = page
+    totalPages.value = Math.max(ipResponse?.last_page || 1, authResponse?.last_page || 1)
   } catch (e: unknown) {
     const err = e as { message?: string }
     error.value = err.message || 'Failed to load audit logs'
@@ -84,6 +123,32 @@ function formatChanges(oldValues: Record<string, unknown> | null, newValues: Rec
   if (!oldValues) return JSON.stringify(newValues, null, 2)
   if (!newValues) return 'Deleted'
   return `${JSON.stringify(oldValues)} → ${JSON.stringify(newValues)}`
+}
+
+function getEntityDisplayName(log: AuditLog): string {
+  // Try to get a descriptive name from new_values or old_values
+  const values = log.new_values || log.old_values
+  
+  if (!values) return ''
+  
+  // For IP addresses, show the actual IP and label
+  if (log.entity_type === 'ip_address') {
+    const ip = values.ip_address as string
+    const label = values.label as string
+    if (ip && label) return `${ip} (${label})`
+    if (ip) return ip
+    if (label) return label
+  }
+  
+  // For users, show name or email
+  if (log.entity_type === 'user') {
+    const name = values.name as string
+    const email = values.email as string
+    if (name) return name
+    if (email) return email
+  }
+  
+  return ''
 }
 
 onMounted(() => {
@@ -123,6 +188,23 @@ onMounted(() => {
           placeholder="e.g. admin@example.com"
         >
       </div>
+      <div class="filter-group">
+        <label class="filter-label">Filter by Session</label>
+        <select v-model="filterSession" class="filter-input">
+          <option value="">All Sessions</option>
+          <option v-for="session in uniqueSessions" :key="session" :value="session">
+            {{ session.substring(0, 8) }}...
+          </option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Filter by Source</label>
+        <select v-model="filterSource" class="filter-input">
+          <option value="all">All Sources</option>
+          <option value="auth">Authentication (login/logout)</option>
+          <option value="ip">IP Addresses</option>
+        </select>
+      </div>
     </div>
 
     <div v-if="loading" class="loading-state">
@@ -157,6 +239,7 @@ onMounted(() => {
                 <th>Action</th>
                 <th>Entity</th>
                 <th class="hide-tablet">User</th>
+                <th class="hide-tablet">Session</th>
                 <th class="hide-tablet">IP Address</th>
                 <th>Details</th>
               </tr>
@@ -170,13 +253,24 @@ onMounted(() => {
                   </span>
                 </td>
                 <td>
-                  <span v-if="log.entity_type">
-                    {{ log.entity_type }}
-                    <span v-if="log.entity_id" class="entity-id">#{{ log.entity_id }}</span>
+                  <span v-if="log.entity_type" class="entity-cell">
+                    <span class="entity-name" v-if="getEntityDisplayName(log)">
+                      {{ getEntityDisplayName(log) }}
+                    </span>
+                    <span class="entity-type-id">
+                      {{ log.entity_type }}<span v-if="log.entity_id" class="entity-id">#{{ log.entity_id }}</span>
+                    </span>
                   </span>
                   <span v-else class="text-muted">-</span>
                 </td>
                 <td class="hide-tablet">{{ log.user_email }}</td>
+                <td class="hide-tablet session-cell">
+                  <details v-if="log.session_id" class="session-details">
+                    <summary class="session-summary">{{ log.session_id.substring(0, 8) }}...</summary>
+                    <div class="session-full">{{ log.session_id }}</div>
+                  </details>
+                  <span v-else class="text-muted">-</span>
+                </td>
                 <td class="hide-tablet"><span class="ip-address">{{ log.ip_address || '-' }}</span></td>
                 <td class="details">
                   <details v-if="log.old_values || log.new_values">
@@ -204,7 +298,10 @@ onMounted(() => {
               </div>
               <div v-if="log.entity_type" class="mobile-log-card__row">
                 <span class="mobile-log-card__label">Entity</span>
-                <span class="mobile-log-card__value">{{ log.entity_type }} <span v-if="log.entity_id" class="entity-id">#{{ log.entity_id }}</span></span>
+                <span class="mobile-log-card__value">
+                  <span v-if="getEntityDisplayName(log)" class="entity-name">{{ getEntityDisplayName(log) }}</span>
+                  <span class="entity-type-id">{{ log.entity_type }}<span v-if="log.entity_id" class="entity-id">#{{ log.entity_id }}</span></span>
+                </span>
               </div>
               <div v-if="log.ip_address" class="mobile-log-card__row">
                 <span class="mobile-log-card__label">IP</span>
@@ -399,6 +496,39 @@ onMounted(() => {
   font-size: 0.8125rem;
 }
 
+.entity-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.entity-name {
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.dark .entity-name {
+  color: #f1f5f9;
+}
+
+.entity-type-id {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.session-id {
+  font-family: monospace;
+  font-size: 0.75rem;
+  background-color: #f1f5f9;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: help;
+}
+
+.dark .session-id {
+  background-color: #334155;
+}
+
 .text-muted {
   color: #94a3b8;
 }
@@ -465,6 +595,47 @@ onMounted(() => {
   white-space: pre-wrap;
   word-break: break-all;
   font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+  border: 1px solid #e2e8f0;
+}
+
+/* Session Details */
+.session-cell {
+  min-width: 100px;
+}
+
+.session-details summary {
+  font-size: 0.8125rem;
+  color: #22c55e;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.session-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.session-details summary::before {
+  content: '▶ ';
+  font-size: 0.625rem;
+}
+
+.session-details[open] summary::before {
+  content: '▼ ';
+}
+
+.session-details summary:hover {
+  color: #16a34a;
+}
+
+.session-full {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+  word-break: break-all;
   border: 1px solid #e2e8f0;
 }
 

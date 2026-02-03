@@ -82,6 +82,9 @@ class GatewayService
             $url = $baseUrl . $path;
             $http = Http::timeout(self::TIMEOUT_SECONDS)->acceptJson();
 
+            // Always forward the original client IP
+            $http = $http->withHeaders(['X-Forwarded-For' => $request->ip()]);
+
             if ($request->bearerToken()) {
                 $http = $http->withToken($request->bearerToken());
                 

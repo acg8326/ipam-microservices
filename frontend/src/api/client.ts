@@ -12,6 +12,7 @@ class ApiClient {
   private baseUrl: string
   private token: string | null = null
   private tokenExpiry: number | null = null
+  private sessionId: string | null = null
   private refreshPromise: Promise<void> | null = null
   private isRefreshing = false
 
@@ -20,28 +21,43 @@ class ApiClient {
     this.token = localStorage.getItem('access_token')
     const expiry = localStorage.getItem('token_expiry')
     this.tokenExpiry = expiry ? parseInt(expiry, 10) : null
+    this.sessionId = localStorage.getItem('session_id')
     
     // Start background refresh timer
     this.startRefreshTimer()
   }
 
-  setToken(token: string | null, expiresIn?: number) {
+  setToken(token: string | null, expiresIn?: number, sessionId?: string) {
     this.token = token
     if (token && expiresIn) {
       // Calculate expiry timestamp (expiresIn is in seconds)
       this.tokenExpiry = Date.now() + (expiresIn * 1000)
       localStorage.setItem('access_token', token)
       localStorage.setItem('token_expiry', this.tokenExpiry.toString())
+      if (sessionId) {
+        this.sessionId = sessionId
+        localStorage.setItem('session_id', sessionId)
+      }
     } else if (token) {
       // Default to 1 hour if no expiry provided
       this.tokenExpiry = Date.now() + (3600 * 1000)
       localStorage.setItem('access_token', token)
       localStorage.setItem('token_expiry', this.tokenExpiry.toString())
+      if (sessionId) {
+        this.sessionId = sessionId
+        localStorage.setItem('session_id', sessionId)
+      }
     } else {
       this.tokenExpiry = null
+      this.sessionId = null
       localStorage.removeItem('access_token')
       localStorage.removeItem('token_expiry')
+      localStorage.removeItem('session_id')
     }
+  }
+
+  getSessionId(): string | null {
+    return this.sessionId
   }
 
   getToken(): string | null {
@@ -133,6 +149,10 @@ class ApiClient {
 
     if (this.token) {
       ;(headers as Record<string, string>)['Authorization'] = `Bearer ${this.token}`
+    }
+
+    if (this.sessionId) {
+      ;(headers as Record<string, string>)['X-Session-ID'] = this.sessionId
     }
 
     const response = await fetch(url, {
