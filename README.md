@@ -49,13 +49,38 @@ flowchart TB
 
 ## Quick Start
 
+### Option 1: Using Make (Linux/macOS)
+
 ```bash
-# Clone and start
 git clone https://github.com/acg8326/ipam-microservices.git
 cd ipam-microservices
 cp .env.example .env
 make fresh
 ```
+
+### Option 2: Using Docker Compose Directly (Windows/Linux/macOS)
+
+```bash
+git clone https://github.com/acg8326/ipam-microservices.git
+cd ipam-microservices
+cp .env.example .env
+
+# Build and start containers
+docker compose up -d --build
+
+# Wait for services to initialize (about 10-15 seconds)
+# Then run migrations
+docker compose exec auth-service php artisan migrate --force
+docker compose exec ip-service php artisan migrate --force
+
+# Seed default users
+docker compose exec auth-service php artisan db:seed --force
+
+# Install Passport keys
+docker compose exec auth-service php artisan passport:install --force
+```
+
+> **Windows Users:** Use `copy .env.example .env` instead of `cp`
 
 Access the application:
 - **Frontend:** http://localhost:3000
@@ -71,6 +96,17 @@ Verify services are running:
 ```bash
 curl http://localhost:8000/api/health
 ```
+
+### Common Commands
+
+| Task | Make | Docker Compose |
+|------|------|----------------|
+| Start services | `make up` | `docker compose up -d` |
+| Stop services | `make down` | `docker compose down` |
+| View logs | `make logs` | `docker compose logs -f` |
+| Run migrations | `make migrate` | `docker compose exec auth-service php artisan migrate --force` |
+| Seed database | `make seed` | `docker compose exec auth-service php artisan db:seed --force` |
+| Run tests | `make test-be` | `docker compose exec auth-service php artisan test` |
 
 See [Docker Documentation](docs/docker.md) for detailed setup, commands, and troubleshooting.
 

@@ -35,23 +35,37 @@ The IPAM Microservices project is fully containerized using Docker and Docker Co
 ### Prerequisites
 - Docker Engine 20.10+
 - Docker Compose v2+
+- (Optional) Make - for simplified commands
 
-### Start Services
+### Option 1: Using Make (Linux/macOS)
 
 ```bash
-# Clone and navigate to project
+cd ipam-microservices
+cp .env.example .env
+make fresh
+```
+
+### Option 2: Without Make (Windows/Linux/macOS)
+
+```bash
 cd ipam-microservices
 
-# Copy environment file
+# Windows: use 'copy .env.example .env'
 cp .env.example .env
 
-# Fresh install (build, start, migrate, seed)
-make fresh
+# Build and start all containers
+docker compose up -d --build
+
+# Wait 10-15 seconds for MySQL to initialize, then run:
+docker compose exec auth-service php artisan migrate --force
+docker compose exec ip-service php artisan migrate --force
+docker compose exec auth-service php artisan db:seed --force
+docker compose exec auth-service php artisan passport:install --force
 ```
 
 ### Default Login Credentials
 
-After running `make fresh`, the following users are available:
+After setup, the following users are available:
 
 | Role | Email | Password |
 |------|-------|----------|
