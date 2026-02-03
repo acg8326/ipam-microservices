@@ -7,26 +7,27 @@ The IPAM Microservices project is fully containerized using Docker and Docker Co
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Docker Network                            │
-│                         (ipam-network)                           │
-│                                                                  │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐           │
-│  │   Gateway    │  │ Auth Service │  │  IP Service  │           │
-│  │   :8000      │  │    :8001     │  │    :8002     │           │
-│  │              │  │              │  │              │           │
-│  │ nginx + fpm  │  │ nginx + fpm  │  │ nginx + fpm  │           │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘           │
-│         │                 │                 │                    │
-│         │          ┌──────┴───────┐  ┌──────┴───────┐           │
-│         │          │  MySQL Auth  │  │  MySQL IP    │           │
-│         │          │    :3306     │  │    :3307     │           │
-│         │          │  (internal)  │  │  (internal)  │           │
-│         │          └──────────────┘  └──────────────┘           │
-└─────────┼────────────────────────────────────────────────────────┘
-          │
-    External Access
-    localhost:8000
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           Docker Network                                 │
+│                            (ipam-network)                                │
+│                                                                          │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐ │
+│  │   Frontend   │  │   Gateway    │  │ Auth Service │  │  IP Service  │ │
+│  │    :3000     │  │   :8000      │  │  (internal)  │  │  (internal)  │ │
+│  │              │  │              │  │              │  │              │ │
+│  │    nginx     │  │ nginx + fpm  │  │ nginx + fpm  │  │ nginx + fpm  │ │
+│  └──────────────┘  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘ │
+│                           │                 │                 │          │
+│                           │          ┌──────┴───────┐  ┌──────┴───────┐ │
+│                           │          │  MySQL Auth  │  │  MySQL IP    │ │
+│                           │          │    :3306     │  │    :3307     │ │
+│                           │          │  (internal)  │  │  (internal)  │ │
+│                           │          └──────────────┘  └──────────────┘ │
+└───────────────────────────┼──────────────────────────────────────────────┘
+                            │
+                     External Access
+              Frontend: localhost:3000
+              API: localhost:8000
 ```
 
 ## Quick Start
@@ -248,18 +249,61 @@ All services connect to `ipam-network` (bridge driver):
 | Service | Internal Hostname | Internal Port | External Port |
 |---------|-------------------|---------------|---------------|
 | gateway | gateway | 80 | 8000 |
-| auth-service | auth-service | 80 | 8001 |
-| ip-service | ip-service | 80 | 8002 |
+| auth-service | auth-service | 80 | - |
+| ip-service | ip-service | 80 | - |
+| frontend | frontend | 80 | 3000 |
 | mysql-auth | mysql-auth | 3306 | - |
 | mysql-ip | mysql-ip | 3306 | - |
 
 ### Service Discovery
 
 Services communicate using container names:
+- Frontend → `http://localhost:8000/api/...` (via browser)
 - Gateway → `http://auth-service/api/...`
 - Gateway → `http://ip-service/api/...`
 - Auth Service → `mysql-auth:3306`
 - IP Service → `mysql-ip:3306`
+
+## Frontend Container
+
+### Build Strategy
+Multi-stage build for optimal production image:
+
+1. **Build Stage** (node:20-alpine)
+   - Install npm dependencies
+   - Build production bundle with Vite
+   
+2. **Serve Stage** (nginx:alpine)
+   - Copy built assets
+   - Serve via nginx with SPA routing
+
+### Configuration
+```yaml
+frontend:
+  build: ./frontend
+  container_name: ipam-frontend
+  ports:
+    - "3000:80"
+  environment:
+    - VITE_API_URL=http://localhost:8000/api
+  networks:
+    - ipam-network
+```
+
+### Development Mode
+For development with hot module replacement:
+```yaml
+# docker-compose.dev.yml
+frontend:
+  build:
+    context: ./frontend
+    dockerfile: Dockerfile.dev
+  volumes:
+    - ./frontend:/app
+    - /app/node_modules
+  ports:
+    - "3000:5173"
+```
 
 ## Health Checks
 
@@ -353,4 +397,4 @@ make fresh
 
 ---
 
-*Last updated: February 2, 2026*
+*Last updated: February 3, 2026*

@@ -218,13 +218,15 @@ If mismatch → Tampering detected
 - **Web Server**: nginx
 - **Process Manager**: supervisord
 - **Database**: MySQL 8.0
+- **Frontend**: Node.js 20 (build) + nginx (serve)
 
 ### Services
 | Service | Internal Port | External Port | Database |
 |---------|---------------|---------------|----------|
+| Frontend | 80 | 3000 | None |
 | Gateway | 80 | 8000 | None |
-| Auth Service | 80 | 8001 | mysql-auth |
-| IP Service | 80 | 8002 | mysql-ip |
+| Auth Service | 80 | internal | mysql-auth |
+| IP Service | 80 | internal | mysql-ip |
 
 ### Docker Compose Files
 - `docker-compose.yml` - Production configuration
@@ -244,10 +246,69 @@ See [Docker Documentation](docker.md) for full details.
 
 ---
 
+## Frontend Application
+
+### Tech Stack
+- **Framework**: Vue.js 3.5 with Composition API
+- **Language**: TypeScript
+- **State Management**: Pinia
+- **Routing**: Vue Router 4
+- **Build Tool**: Vite
+- **Testing**: Vitest + Vue Test Utils
+
+### Pages
+| Page | Route | Access |
+|------|-------|--------|
+| Login | `/login` | Public |
+| Dashboard | `/` | Authenticated |
+| IP Addresses | `/ip-addresses` | Authenticated |
+| Audit Logs | `/audit-logs` | Admin only |
+| Settings | `/settings` | Admin only |
+
+### Features
+- Responsive design
+- Role-based navigation
+- Real-time form validation
+- Search and pagination
+- Modal dialogs for CRUD operations
+
+See [Frontend Documentation](frontend.md) for full details.
+
+---
+
+## Testing
+
+### Backend Tests (PHPUnit)
+| Service | Tests | Coverage |
+|---------|-------|----------|
+| Auth Service | 14 | Authentication, User Management |
+| IP Service | 23 | IP CRUD, Audit Logs, Permissions |
+| Gateway | 2 | Health Check |
+
+### Frontend Tests (Vitest)
+| Category | Tests | Coverage |
+|----------|-------|----------|
+| Auth Store | 4 | State management |
+| IP Store | 4 | State management |
+| Validation | 8 | IP address validation |
+
+### Running Tests
+```bash
+# Frontend
+cd frontend && npm run test:run
+
+# Backend (inside containers)
+docker exec ipam-auth-service php artisan test
+docker exec ipam-ip-service php artisan test
+```
+
+---
+
 ## Technical Stack
 
-- **Framework**: Laravel 12
+- **Framework**: Laravel 12 (Backend), Vue.js 3.5 (Frontend)
 - **PHP Version**: 8.2
+- **Node Version**: 20
 - **Authentication**: Laravel Passport (OAuth2)
 - **Database**: MySQL 8.0
 - **Containerization**: Docker + Docker Compose
@@ -257,19 +318,26 @@ See [Docker Documentation](docker.md) for full details.
 
 ## Completed Features
 
-- [x] Docker containerization (`docker-compose.yml`)
-- [x] `.env.example` files for all services
-- [x] Makefile with convenience commands
-- [x] Development mode with volume mounts
+- [x] Microservices architecture (Gateway, Auth, IP)
+- [x] Docker containerization (all services)
+- [x] Frontend Vue.js SPA
+- [x] JWT authentication with auto-refresh
+- [x] Role-based access control (admin/user)
+- [x] IP address CRUD operations
+- [x] Tamper-proof audit logging
+- [x] Dashboard with statistics
+- [x] User management (admin)
+- [x] PHPUnit tests (backend)
+- [x] Vitest tests (frontend)
 
-## Pending Features
+## Future Enhancements
 
-- [ ] Frontend (Vue.js 3.5 SPA)
-- [ ] Unit tests (PHPUnit)
-- [ ] Integration tests
 - [ ] Per-user rate limiting
 - [ ] Redis caching
+- [ ] Email notifications
+- [ ] IP address reservations
+- [ ] Bulk import/export
 
 ---
 
-*Last updated: February 2, 2026*
+*Last updated: February 3, 2026*

@@ -33,7 +33,7 @@ flowchart TB
 
 | Service | Port | Description |
 |---------|------|-------------|
-| Frontend | 3000 | Vue.js SPA user interface |
+| Frontend | 3000 | Vue.js 3.5 SPA with TypeScript |
 | Gateway | 8000 | API routing, circuit breaker, rate limiting |
 | Auth Service | internal | JWT authentication, RBAC, user management |
 | IP Service | internal | IP address CRUD, tamper-proof audit logs |
@@ -41,10 +41,11 @@ flowchart TB
 ## Tech Stack
 
 - **Backend:** Laravel 12 / PHP 8.2
-- **Frontend:** Vue.js 3.5 + TypeScript + Pinia
+- **Frontend:** Vue.js 3.5 + TypeScript + Pinia + Vue Router
 - **Database:** MySQL 8.0
 - **Auth:** Laravel Passport (OAuth2/JWT)
 - **Containerization:** Docker + Docker Compose
+- **Testing:** PHPUnit (backend) + Vitest (frontend)
 
 ## Quick Start
 
@@ -68,6 +69,15 @@ curl http://localhost:8000/api/health
 
 See [Docker Documentation](docs/docker.md) for detailed setup, commands, and troubleshooting.
 
+## Features
+
+- **Authentication:** JWT-based login with automatic token refresh
+- **Role-Based Access:** Admin and User roles with different permissions
+- **IP Management:** Create, read, update, delete IP addresses (IPv4/IPv6)
+- **Audit Logging:** Tamper-proof logs with SHA256 hash chain
+- **Dashboard:** Overview statistics and recent activity
+- **User Management:** Admin can create/manage users
+
 ## API Usage
 
 All requests go through the Gateway at `http://localhost:8000`.
@@ -75,15 +85,11 @@ All requests go through the Gateway at `http://localhost:8000`.
 ### Authentication
 
 ```bash
-# Register
-curl -X POST http://localhost:8000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"name":"John","email":"john@example.com","password":"password123","password_confirmation":"password123"}'
-
+# Register (admin only via Settings page)
 # Login
 curl -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"john@example.com","password":"password123"}'
+  -d '{"email":"admin@example.com","password":"password123"}'
 ```
 
 ### Protected Requests
@@ -94,11 +100,23 @@ curl http://localhost:8000/api/ip-addresses \
   -H "Authorization: Bearer {your_access_token}"
 ```
 
+## Testing
+
+```bash
+# Frontend tests (Vitest)
+cd frontend && npm run test:run
+
+# Backend tests (PHPUnit) - run inside containers
+docker exec ipam-auth-service php artisan test
+docker exec ipam-ip-service php artisan test
+```
+
 ## Documentation
 
 | Document | Description |
 |----------|-------------|
-| [Features Overview](docs/features.md) | Complete feature list, security model, endpoints summary |
+| [Features Overview](docs/features.md) | Complete feature list, security model, endpoints |
+| [Frontend Guide](docs/frontend.md) | Vue.js SPA architecture, components, state management |
 | [Docker Setup](docs/docker.md) | Container configuration, commands, troubleshooting |
 | [Gateway Service](docs/gateway.md) | Routing, circuit breaker, rate limiting |
 | [Auth Service API](docs/auth-service.md) | Authentication endpoints, error responses |
@@ -107,3 +125,7 @@ curl http://localhost:8000/api/ip-addresses \
 ## License
 
 MIT
+
+---
+
+*Last updated: February 3, 2026*
