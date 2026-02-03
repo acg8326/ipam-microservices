@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useIPAddressesStore, useAuthStore } from '@/stores'
+import { useIPAddressesStore, useAuthStore, useToastStore } from '@/stores'
 
 interface IPAddress {
   id: number
@@ -15,6 +15,7 @@ interface IPAddress {
 
 const ipStore = useIPAddressesStore()
 const authStore = useAuthStore()
+const toast = useToastStore()
 
 const searchQuery = ref('')
 const showAddModal = ref(false)
@@ -102,10 +103,16 @@ async function createIP() {
       comment: form.value.comment || null
     })
     showAddModal.value = false
+    toast.success('IP address created successfully')
     ipStore.fetchIPAddresses()
   } catch (error: any) {
-    if (error.response?.data?.errors) {
-      formErrors.value = error.response.data.errors
+    if (error.errors) {
+      // Handle validation errors from API
+      const errorMessages = Object.values(error.errors).flat()
+      formErrors.value = error.errors
+      toast.error(errorMessages[0] as string || 'Failed to create IP address')
+    } else {
+      toast.error(error.message || 'Failed to create IP address')
     }
   }
 }
@@ -125,10 +132,14 @@ async function updateIP() {
       comment: form.value.comment || null
     })
     showEditModal.value = false
+    toast.success('IP address updated successfully')
     ipStore.fetchIPAddresses()
   } catch (error: any) {
-    if (error.response?.data?.errors) {
-      formErrors.value = error.response.data.errors
+    if (error.errors) {
+      formErrors.value = error.errors
+      toast.error('Failed to update IP address')
+    } else {
+      toast.error(error.message || 'Failed to update IP address')
     }
   }
 }
@@ -139,9 +150,10 @@ async function deleteIP() {
   try {
     await ipStore.deleteIPAddress(selectedIP.value.id)
     showDeleteModal.value = false
+    toast.success('IP address deleted successfully')
     ipStore.fetchIPAddresses()
   } catch (error: any) {
-    console.error('Failed to delete IP:', error)
+    toast.error(error.message || 'Failed to delete IP address')
   }
 }
 

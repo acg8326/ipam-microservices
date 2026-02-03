@@ -33,7 +33,10 @@ class IpAddressController extends Controller
             $request->ip()
         );
 
-        return response()->json($ipAddress, 201);
+        return response()->json([
+            'message' => 'IP address created successfully.',
+            'data' => $ipAddress
+        ], 201);
     }
 
     public function show(int $id): JsonResponse
@@ -62,7 +65,10 @@ class IpAddressController extends Controller
             $request->ip()
         );
 
-        return response()->json($updated);
+        return response()->json([
+            'message' => 'IP address updated successfully.',
+            'data' => $updated
+        ]);
     }
 
     public function destroy(Request $request, int $id): JsonResponse
@@ -79,6 +85,6 @@ class IpAddressController extends Controller
 
         $this->ipAddressService->delete($ipAddress, $user, $sessionId, $request->ip());
 
-        return response()->json(['message' => 'IP address deleted']);
+        return response()->json(['message' => 'IP address deleted successfully.']);
     }
 }
